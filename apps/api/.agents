@@ -3,6 +3,7 @@ ai-instructions:
   context: |
     Gaming Tracker API built with NestJS, Prisma ORM, and PostgreSQL.
     Goal: Help implement features while maintaining security, code quality, and consistency.
+    Package manager: bun (not npm or yarn).
 
   before-you-code:
     - "Verify the feature doesn't already exist by grepping the codebase"
@@ -150,10 +151,10 @@ ai-instructions:
   git-workflow:
     - "Branch naming: feature/xyz, fix/bug-name, docs/xyz"
     - "Commit message: 'Add xyz endpoint', 'Fix auth validation', etc"
-    - "Run before commit: npm run format"
-    - "Run before commit: npm run lint:fix"
-    - "Run before commit: npm test"
-    - "Run before commit: npm run build"
+    - "Run before commit: bun run format"
+    - "Run before commit: bun run lint:fix"
+    - "Run before commit: bun test"
+    - "Run before commit: bun run build"
     - "Verify no sensitive data in commits (.env, passwords, keys)"
 
   when-stuck:

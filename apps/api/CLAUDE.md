@@ -62,7 +62,11 @@ src/
    - Hash with bcrypt, SALT_ROUNDS = 12
    - Never return passwordHash in responses
    - Constant-time comparison (bcrypt.compare)
-   - Minimum password requirements enforced via DTOs
+   - **Password requirements (enforced in RegisterDto):**
+     - Minimum 8 characters
+     - At least one uppercase letter (A-Z)
+     - At least one lowercase letter (a-z)
+     - At least one number (0-9)
 
 3. **Authorization Rules**
    - Users can only access their own data
@@ -101,12 +105,14 @@ src/
 ### Environment & Secrets
 
 - **All secrets in `.env.local` (not committed to git)**
-  - `JWT_SECRET` - strong random string (min 32 chars)
+  - `JWT_SECRET` - **REQUIRED**, strong random string (min 32 chars, generate with `openssl rand -base64 32`)
   - `DATABASE_URL` - PostgreSQL connection
   - `IGDB_CLIENT_ID` - IGDB API credentials
   - `IGDB_CLIENT_SECRET` - IGDB API credentials
   - `PORT` - server port (default 4000)
+  - `CORS_ORIGIN` - Allowed frontend origin (default: `http://localhost:3000`)
 
+- **JWT_SECRET is mandatory** - app startup fails if not set
 - Never log secrets or sensitive data
 - Use `process.env['KEY_NAME']` with nullish coalescing for optional values
 
@@ -124,13 +130,24 @@ src/
 
 ### Rate Limiting & DoS Protection
 
-- **To implement:** Add throttler guard from `@nestjs/throttler` if endpoints get abused
-- Priority: Public endpoints (auth, search) should be rate-limited first
+- **Implemented:** Auth endpoints (register, login) are rate-limited via `@nestjs/throttler`
+- Rate limit: **5 requests per 15 minutes** per IP address
+- Limit applies to: POST `/api/auth/register` and POST `/api/auth/login`
+- If limit exceeded: returns 429 Too Many Requests
+- Uses custom `AuthThrottleGuard` to track by IP instead of user
 
 ### CORS & HTTP Headers
 
-- Configure in `main.ts` if needed for web/mobile clients
-- Use helmet middleware for security headers when deployed
+- **Helmet middleware** enabled in `main.ts` - provides secure HTTP headers:
+  - X-Frame-Options: DENY (prevents clickjacking)
+  - X-Content-Type-Options: nosniff
+  - X-XSS-Protection: enabled
+  - Strict-Transport-Security: HSTS for HTTPS enforcement
+  - Content-Security-Policy: restrictive defaults
+- **CORS configuration:**
+  - Allowed origin: `CORS_ORIGIN` env var (default: `http://localhost:3000`)
+  - Credentials allowed: true (for cookies/JWT)
+  - Configure for each frontend URL in production
 
 ## Code Quality Standards
 
@@ -407,33 +424,33 @@ export class FeatureModule {}
 ### Starting Development
 
 ```bash
-# Install dependencies
-npm install
+# Install dependencies (using bun)
+bun install
 
 # Generate Prisma client
-npx prisma generate
+bunx prisma generate
 
 # Run migrations
-npm run db:migrate
+bun run db:migrate
 
 # Start dev server with hot reload
-npm run start:dev
+bun run start:dev
 ```
 
 ### Before Committing
 
 ```bash
 # Format code
-npm run format
+bun run format
 
 # Lint and fix issues
-npm run lint:fix
+bun run lint:fix
 
 # Run tests
-npm test
+bun test
 
 # Build to check for compile errors
-npm run build
+bun run build
 ```
 
 ### Building for Production
@@ -445,11 +462,11 @@ npm run start:prod     # Runs compiled version
 
 ## Debugging Tips
 
-- Use `--debug` flag: `npm run start:debug`
+- Use `--debug` flag: `bun run start:debug`
 - Add breakpoints in Chrome DevTools at `chrome://inspect`
 - Log with `this.logger.log()`/`.error()` from `@nestjs/common`
-- Use `npm run test:debug` for test debugging
-- Check `prisma studio` to inspect database state
+- Use `bun run test:debug` for test debugging
+- Check `bunx prisma studio` to inspect database state
 
 ## Resources & References
 
