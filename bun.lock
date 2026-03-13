@@ -125,6 +125,10 @@
     "packages/types": {
       "name": "@repo/types",
       "version": "0.0.1",
+      "dependencies": {
+        "class-transformer": "^0.5.1",
+        "class-validator": "^0.15.1",
+      },
     },
   },
   "trustedDependencies": [

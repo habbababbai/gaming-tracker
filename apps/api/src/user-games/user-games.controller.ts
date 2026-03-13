@@ -13,7 +13,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { GameStatus } from '../generated/prisma/client.js';
+import { GameStatus } from '@repo/types';
 import { AuthUser, type AuthUserPayload } from '../auth/user.decorator.js';
 import { UserGamesService } from './user-games.service.js';
 import { CreateUserGameDto } from './dto/create-user-game.dto.js';
@@ -34,7 +34,7 @@ export class UserGamesController {
     @AuthUser() user: AuthUserPayload,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
-    @Query('status') status?: (typeof GameStatus)[keyof typeof GameStatus],
+    @Query('status') status?: GameStatus,
   ) {
     return this.userGames.findAll(user.id, page, limit, status);
   }

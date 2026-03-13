@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { GameStatus } from '../generated/prisma/client.js';
+import { GameStatus } from '@repo/types';
 import { IgdbService } from '../igdb/igdb.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateUserGameDto } from './dto/create-user-game.dto.js';
@@ -48,7 +48,7 @@ export class UserGamesService {
       data: {
         userId,
         gameId: game.id,
-        status: (dto.status as GameStatus) ?? GameStatus.todo,
+        status: dto.status ?? GameStatus.TODO,
       },
       include: { user: true, game: true },
     });
@@ -84,7 +84,7 @@ export class UserGamesService {
     await this.findOne(userId, id);
     return this.prisma.userGame.update({
       where: { id },
-      data: { status: dto.status as GameStatus },
+      data: { status: dto.status },
       include: { user: true, game: true },
     });
   }
