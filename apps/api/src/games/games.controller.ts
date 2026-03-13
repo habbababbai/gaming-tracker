@@ -5,12 +5,14 @@ import {
   ParseIntPipe,
   Query,
 } from '@nestjs/common';
+import { Public } from '../auth/public.decorator.js';
 import { IgdbService } from '../igdb/igdb.service.js';
 
 @Controller('games')
 export class GamesController {
   constructor(private readonly igdb: IgdbService) {}
 
+  @Public()
   @Get('search')
   async search(
     @Query('q') query: string,

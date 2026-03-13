@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   DefaultValuePipe,
@@ -14,6 +13,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { GameStatus } from '../generated/prisma/client.js';
+import { AuthUser, type AuthUserPayload } from '../auth/user.decorator.js';
 import { UserGamesService } from './user-games.service.js';
 import { CreateUserGameDto } from './dto/create-user-game.dto.js';
 import { UpdateUserGameDto } from './dto/update-user-game.dto.js';
@@ -24,36 +24,37 @@ export class UserGamesController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() dto: CreateUserGameDto) {
-    return this.userGames.create(dto).then((data) => ({ data }));
+  create(@AuthUser() user: AuthUserPayload, @Body() dto: CreateUserGameDto) {
+    return this.userGames.create(user.id, dto).then((data) => ({ data }));
   }
 
   @Get()
   findAll(
-    @Query('userId') userId: string,
+    @AuthUser() user: AuthUserPayload,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('status') status?: (typeof GameStatus)[keyof typeof GameStatus],
   ) {
-    if (!userId) {
-      throw new BadRequestException('userId is required');
-    }
-    return this.userGames.findAll(userId, page, limit, status);
+    return this.userGames.findAll(user.id, page, limit, status);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userGames.findOne(id).then((data) => ({ data }));
+  findOne(@AuthUser() user: AuthUserPayload, @Param('id') id: string) {
+    return this.userGames.findOne(user.id, id).then((data) => ({ data }));
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateUserGameDto) {
-    return this.userGames.update(id, dto).then((data) => ({ data }));
+  update(
+    @AuthUser() user: AuthUserPayload,
+    @Param('id') id: string,
+    @Body() dto: UpdateUserGameDto,
+  ) {
+    return this.userGames.update(user.id, id, dto).then((data) => ({ data }));
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string) {
-    await this.userGames.remove(id);
+  async remove(@AuthUser() user: AuthUserPayload, @Param('id') id: string) {
+    await this.userGames.remove(user.id, id);
   }
 }

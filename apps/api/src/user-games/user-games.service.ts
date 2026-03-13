@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -16,8 +17,7 @@ export class UserGamesService {
     private readonly igdb: IgdbService,
   ) {}
 
-  async create(dto: CreateUserGameDto) {
-    await this.prisma.user.findUniqueOrThrow({ where: { id: dto.userId } });
+  async create(userId: string, dto: CreateUserGameDto) {
     const igdbGame = await this.igdb.getById(dto.igdbId);
     if (!igdbGame) {
       throw new NotFoundException('Game not found in IGDB');
@@ -38,7 +38,7 @@ export class UserGamesService {
     });
     const existing = await this.prisma.userGame.findUnique({
       where: {
-        userId_gameId: { userId: dto.userId, gameId: game.id },
+        userId_gameId: { userId, gameId: game.id },
       },
     });
     if (existing) {
@@ -46,7 +46,7 @@ export class UserGamesService {
     }
     return this.prisma.userGame.create({
       data: {
-        userId: dto.userId,
+        userId,
         gameId: game.id,
         status: (dto.status as GameStatus) ?? GameStatus.todo,
       },
@@ -70,17 +70,18 @@ export class UserGamesService {
     return { data, meta: { page, limit, total } };
   }
 
-  async findOne(id: string) {
+  async findOne(userId: string, id: string) {
     const userGame = await this.prisma.userGame.findUnique({
       where: { id },
       include: { user: true, game: true },
     });
     if (!userGame) throw new NotFoundException('UserGame not found');
+    if (userGame.userId !== userId) throw new ForbiddenException();
     return userGame;
   }
 
-  async update(id: string, dto: UpdateUserGameDto) {
-    await this.findOne(id);
+  async update(userId: string, id: string, dto: UpdateUserGameDto) {
+    await this.findOne(userId, id);
     return this.prisma.userGame.update({
       where: { id },
       data: { status: dto.status as GameStatus },
@@ -88,8 +89,8 @@ export class UserGamesService {
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(userId: string, id: string) {
+    await this.findOne(userId, id);
     await this.prisma.userGame.delete({ where: { id } });
   }
 }

@@ -11,8 +11,8 @@ Backend for web and mobile apps. NestJS, Prisma, PostgreSQL.
 
 1. `docker compose up -d` (root)
 2. Copy `.env.example` → `.env`
-3. `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/game_tracker`
-4. `bun run db:migrate` (create tables)
+3. Set in `.env`: `DATABASE_URL`, `JWT_SECRET` (e.g. `openssl rand -base64 32`), `IGDB_CLIENT_ID`, `IGDB_CLIENT_SECRET`
+4. `bun run db:migrate`
 
 ## Commands
 
