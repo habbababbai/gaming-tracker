@@ -28,6 +28,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Repo setup
 
 
+### Changed
+- Setup unit tests for API (#9)
+- Setup Postgres, Nest.js and Endpoints (#1)
+- READMEs, examples, AGENTS file
+- Repo setup
+
+
 ## [1.0.0] - 2026-03-14
 
 ### Added
