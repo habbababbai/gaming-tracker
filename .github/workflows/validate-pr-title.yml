@@ -1,0 +1,58 @@
+name: Validate PR Title
+
+on:
+  pull_request:
+    types: [opened, edited, reopened]
+
+jobs:
+  validate-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title format
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+
+          # Regex: [SCOPE] - Description
+          # SCOPE can be: BE, WEB, MOBILE, DOCS, CONFIG, TYPES (comma-separated)
+          if [[ $TITLE =~ ^\[[A-Z]+(\,\ [A-Z]+)*\]\ -\ .{3,} ]]; then
+            echo "✅ PR title is valid: $TITLE"
+            exit 0
+          else
+            echo "❌ PR title does not follow naming convention!"
+            echo ""
+            echo "Required format: [SCOPE] - Description"
+            echo ""
+            echo "Valid scopes:"
+            echo "  [BE]                  - Backend/API only"
+            echo "  [WEB]                 - Frontend/Web only"
+            echo "  [MOBILE]              - Mobile app only"
+            echo "  [TYPES]               - Shared types package"
+            echo "  [DOCS]                - Documentation only"
+            echo "  [CONFIG]              - Configuration/CI-CD only"
+            echo "  [BE, WEB]             - Backend and Web"
+            echo "  [BE, WEB, MOBILE]     - All apps"
+            echo ""
+            echo "Examples of valid titles:"
+            echo "  ✅ [BE] - Add password reset functionality"
+            echo "  ✅ [WEB] - Create game collection page"
+            echo "  ✅ [MOBILE] - Implement game search"
+            echo "  ✅ [BE, WEB] - Update user response types"
+            echo "  ✅ [BE, WEB, MOBILE] - Update shared types"
+            echo "  ✅ [DOCS] - Update API authentication guide"
+            echo ""
+            echo "Your PR title: $TITLE"
+            exit 1
+          fi
+
+      - name: Comment on PR if invalid
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `❌ **PR Title Validation Failed**\n\nYour PR title does not follow the required format.\n\n**Required format:** \`[SCOPE] - Description\`\n\n**Valid scopes:**\n- \`[BE]\` - Backend/API\n- \`[WEB]\` - Frontend\n- \`[MOBILE]\` - Mobile app\n- \`[TYPES]\` - Shared types\n- \`[DOCS]\` - Documentation\n- \`[CONFIG]\` - Configuration\n- \`[BE, WEB]\`, \`[BE, MOBILE]\`, etc. - Multiple apps\n\n**Examples:**\n- ✅ \`[BE] - Add password reset\`\n- ✅ \`[WEB] - Create game list\`\n- ✅ \`[BE, WEB] - Update types\`\n\nPlease edit your PR title to match this format. See [CONTRIBUTING.md](https://github.com/${{ github.repository }}/blob/main/CONTRIBUTING.md) for more details.`
+            })
+
