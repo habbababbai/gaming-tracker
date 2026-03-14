@@ -488,10 +488,33 @@ app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
 ---
 
+### Coverage Requirements
+
+**Must have unit tests (aim for 80%+ coverage):**
+- `*.service.ts` - all business logic
+
+**Tested via e2e only (excluded from unit coverage):**
+- `*.controller.ts` - HTTP layer
+- `*.guard.ts` - auth/throttle guards exercised by every protected route
+- `*.strategy.ts` - passport config exercised by auth flow
+- `prisma.service.ts` - lifecycle hooks, no business logic
+
+**Excluded from coverage (no tests needed):**
+- `*.module.ts` - DI configuration only
+- `*.dto.ts` - class definitions with decorators
+- `*.decorator.ts` - simple metadata attachers
+- `main.ts` - bootstrap code
+- `generated/**` - auto-generated Prisma client
+
+**Run coverage:** `bun run test:cov`
+
+---
+
 ### Testing Checklist
 
 Before submitting test changes:
 - [ ] All tests pass locally (`bun run test && bun run test:e2e`)
+- [ ] Services have 80%+ line coverage
 - [ ] Each describe block uses unique test data
 - [ ] ESM packages are mocked (igdb-api-node)
 - [ ] Rate limiting is disabled for e2e

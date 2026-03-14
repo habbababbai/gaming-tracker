@@ -90,7 +90,9 @@
       "^@repo/types$": "<rootDir>/../../../packages/types/src/index.ts"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.service.ts",
+      "!**/generated/**",
+      "!**/prisma/prisma.service.ts"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"

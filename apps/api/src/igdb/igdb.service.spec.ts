@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ServiceUnavailableException } from '@nestjs/common';
 import { IgdbService } from './igdb.service';
 
+const mockRequest = jest.fn();
 jest.mock('igdb-api-node', () => ({
   __esModule: true,
   default: jest.fn(() => ({
@@ -9,9 +10,12 @@ jest.mock('igdb-api-node', () => ({
     limit: jest.fn().mockReturnThis(),
     search: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
-    request: jest.fn(),
+    request: mockRequest,
   })),
 }));
+
+const mockFetch = jest.fn();
+global.fetch = mockFetch as unknown as typeof fetch;
 
 describe('IgdbService', () => {
   let service: IgdbService;
@@ -103,6 +107,82 @@ describe('IgdbService', () => {
       ) as () => Promise<unknown>;
 
       await expect(getClient()).rejects.toThrow(ServiceUnavailableException);
+    });
+
+    it('should throw when auth fails', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: false });
+      const getClient = Reflect.get(service, 'getClient').bind(
+        service,
+      ) as () => Promise<unknown>;
+
+      await expect(getClient()).rejects.toThrow(ServiceUnavailableException);
+    });
+
+    it('should authenticate and return client', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({ access_token: 'token', expires_in: 3600 }),
+      });
+      const getClient = Reflect.get(service, 'getClient').bind(
+        service,
+      ) as () => Promise<unknown>;
+
+      const client = await getClient();
+      expect(client).toBeDefined();
+    });
+  });
+
+  describe('search', () => {
+    it('should search games and return mapped results', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({ access_token: 'token', expires_in: 3600 }),
+      });
+      mockRequest.mockResolvedValueOnce({
+        data: [
+          {
+            id: 1,
+            name: 'Test Game',
+            cover: { image_id: 'abc' },
+            first_release_date: 1645747200,
+          },
+        ],
+      });
+
+      const results = await service.search('test');
+      expect(results).toHaveLength(1);
+      expect(results[0].name).toBe('Test Game');
+    });
+  });
+
+  describe('getById', () => {
+    it('should return game by id', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({ access_token: 'token', expires_in: 3600 }),
+      });
+      mockRequest.mockResolvedValueOnce({
+        data: [{ id: 123, name: 'Found Game' }],
+      });
+
+      const result = await service.getById(123);
+      expect(result).not.toBeNull();
+      expect(result?.name).toBe('Found Game');
+    });
+
+    it('should return null when game not found', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({ access_token: 'token', expires_in: 3600 }),
+      });
+      mockRequest.mockResolvedValueOnce({ data: [] });
+
+      const result = await service.getById(999999);
+      expect(result).toBeNull();
     });
   });
 });
