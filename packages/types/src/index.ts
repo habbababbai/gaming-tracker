@@ -5,7 +5,7 @@
  * It contains NO framework-specific code (no class-validator, NestJS, Next.js, etc.).
  *
  * Guidelines:
- * ✅ Export TypeScript enums, interfaces, and types
+ * ✅ Export const objects (not enums - Node strip-only mode), interfaces, and types
  * ✅ Use for request/response contracts
  * ❌ Don't add validators/decorators (API adds these locally)
  * ❌ Don't import framework libraries
@@ -17,57 +17,59 @@
  */
 
 /**
- * Game status enum
+ * Game status - const object pattern for Node.js compatibility
  */
-export enum GameStatus {
-    TODO = "todo",
-    PLAYING = "playing",
-    COMPLETED = "completed",
-    DROPPED = "dropped",
-}
+export const GameStatus = {
+  TODO: 'todo',
+  PLAYING: 'playing',
+  COMPLETED: 'completed',
+  DROPPED: 'dropped',
+} as const;
+
+export type GameStatus = (typeof GameStatus)[keyof typeof GameStatus];
 
 /**
  * Authentication DTOs
  */
 export interface LoginDto {
-    email: string;
-    password: string;
+  email: string;
+  password: string;
 }
 
 export interface RegisterDto {
-    email: string;
-    password: string;
+  email: string;
+  password: string;
 }
 
 /**
  * User Games DTOs
  */
 export interface CreateUserGameDto {
-    igdbId: number;
-    status?: GameStatus;
+  igdbId: number;
+  status?: GameStatus;
 }
 
 export interface UpdateUserGameDto {
-    status: GameStatus;
+  status: GameStatus;
 }
 
 /**
  * User Games Response Types
  */
 export interface GameData {
-    id: string;
-    igdbId: number;
-    name: string;
-    coverUrl?: string;
-    releaseYear?: number;
+  id: string;
+  igdbId: number;
+  name: string;
+  coverUrl?: string;
+  releaseYear?: number;
 }
 
 export interface UserGameResponse {
-    id: string;
-    userId: string;
-    gameId: string;
-    status: GameStatus;
-    game: GameData;
-    createdAt: string;
-    updatedAt: string;
+  id: string;
+  userId: string;
+  gameId: string;
+  status: GameStatus;
+  game: GameData;
+  createdAt: string;
+  updatedAt: string;
 }
