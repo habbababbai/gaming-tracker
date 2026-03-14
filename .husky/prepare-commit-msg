@@ -1,0 +1,28 @@
+#!/bin/sh
+# Prepare-commit-msg hook: validates commit message format
+# Reminds user about [SCOPE] - Description format
+
+COMMIT_MSG_FILE=$1
+
+# Skip for merge commits, squash, etc
+if [ "$2" = "merge" ] || [ "$2" = "squash" ]; then
+    exit 0
+fi
+
+# Read the commit message
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Skip if message already starts with [SCOPE]
+if echo "$COMMIT_MSG" | grep -q "^\[.*\] -"; then
+    exit 0
+fi
+
+# If not, add a helpful comment
+cat >> "$COMMIT_MSG_FILE" << 'EOF'
+
+# 💡 Reminder: Use format [SCOPE] - Description
+# Examples: [BE] - Add feature, [WEB, BE] - Update types
+# See CONTRIBUTING.md for details
+EOF
+
+exit 0

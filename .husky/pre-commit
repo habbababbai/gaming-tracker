@@ -1,0 +1,7 @@
+#!/bin/sh
+echo "💡 Pre-commit reminder:"
+echo "   - Make sure your code follows project standards"
+echo "   - Use commit format: [SCOPE] - Description"
+echo "   - Example: [BE] - Add feature"
+echo ""
+exit 0
