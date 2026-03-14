@@ -1,0 +1,15 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3
+    ignore:
+      # Ignore all minor/patch - only major
+      - dependency-name: "*"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+    groups:
+      # Group all major updates into one PR
+      major-updates:
+        update-types: ["major"]
