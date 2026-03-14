@@ -17,6 +17,17 @@ Read this before making changes. Hobby project – keep it simple.
 
 ---
 
+## Problem-Solving Rules
+
+When asked to investigate and fix errors:
+
+1. **Find root cause first** – Read error messages carefully. Trace through the code path. Don't guess with one-line changes hoping they work.
+2. **Understand before fixing** – Read all relevant files (configs, source, tests). Understand how systems interact.
+3. **Fix completely** – Don't stop at the first error. If there are multiple failures, analyze patterns and fix systematically.
+4. **Never apply blind fixes** – If a change doesn't work, understand why before trying another. Don't iterate randomly.
+
+---
+
 ## Monorepo
 
 - `apps/api`, `apps/web`, `apps/mobile` – apps

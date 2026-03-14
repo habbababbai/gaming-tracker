@@ -1,18 +1,21 @@
 {
   "moduleFileExtensions": ["js", "json", "ts"],
-  "rootDir": ".",
+  "rootDir": "..",
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
+  "testPathIgnorePatterns": ["/node_modules/", "/src/"],
+  "setupFilesAfterEnv": ["<rootDir>/test/setup.ts"],
   "transform": {
     "^.+\\.(t|j)s$": [
       "ts-jest",
       {
-        "tsconfig": "../tsconfig.spec.json"
+        "tsconfig": "tsconfig.spec.json"
       }
     ]
   },
   "moduleNameMapper": {
     "^(\\.{1,2}/.*)\\.js$": "$1",
-    "^@repo/types$": "<rootDir>/../../../packages/types/src/index.ts"
+    "^@repo/types$": "<rootDir>/../../packages/types/src/index.ts",
+    "^igdb-api-node$": "<rootDir>/test/__mocks__/igdb-api-node.ts"
   }
 }

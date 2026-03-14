@@ -8,7 +8,6 @@ import {
   HttpStatus,
   Param,
   ParseIntPipe,
-  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -40,17 +39,14 @@ export class UserGamesController {
   }
 
   @Get(':id')
-  findOne(
-    @AuthUser() user: AuthUserPayload,
-    @Param('id', ParseUUIDPipe) id: string,
-  ) {
+  findOne(@AuthUser() user: AuthUserPayload, @Param('id') id: string) {
     return this.userGames.findOne(user.id, id).then((data) => ({ data }));
   }
 
   @Patch(':id')
   update(
     @AuthUser() user: AuthUserPayload,
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() dto: UpdateUserGameDto,
   ) {
     return this.userGames.update(user.id, id, dto).then((data) => ({ data }));
@@ -58,10 +54,7 @@ export class UserGamesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(
-    @AuthUser() user: AuthUserPayload,
-    @Param('id', ParseUUIDPipe) id: string,
-  ) {
+  async remove(@AuthUser() user: AuthUserPayload, @Param('id') id: string) {
     await this.userGames.remove(user.id, id);
   }
 }
