@@ -12,7 +12,9 @@
         "dev": "turbo dev",
         "build": "turbo build",
         "lint": "turbo lint",
-        "lint:fix": "turbo lint:fix"
+        "lint:fix": "turbo lint:fix",
+        "changelog:generate": "node scripts/generate-changelog.js",
+        "changelog:test": "node scripts/generate-changelog.js --json"
     },
     "devDependencies": {
         "@types/bun": "latest",
