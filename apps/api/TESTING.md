@@ -75,6 +75,45 @@ Pick an `id` → save as `igdbId`.
 | URL | `{{baseUrl}}/user-games` |
 | Headers | `Authorization: Bearer {{accessToken}}` |
 
+Save a game `id` → use as `userGameId`.
+
+---
+
+### 5a. Filter games by status
+
+| Field | Value |
+|-------|-------|
+| Method | GET |
+| URL | `{{baseUrl}}/user-games?status=playing` |
+| Headers | `Authorization: Bearer {{accessToken}}` |
+
+Query params: `?status=todo` \| `?status=playing` \| `?status=completed` \| `?status=dropped`
+
+---
+
+### 5b. Update game status (PATCH)
+
+| Field | Value |
+|-------|-------|
+| Method | PATCH |
+| URL | `{{baseUrl}}/user-games/{{userGameId}}` |
+| Headers | `Content-Type: application/json`, `Authorization: Bearer {{accessToken}}` |
+| Body | `{"status": "completed"}` |
+
+Status values: `"todo"`, `"playing"`, `"completed"`, `"dropped"`
+
+---
+
+### 5c. Delete game (DELETE)
+
+| Field | Value |
+|-------|-------|
+| Method | DELETE |
+| URL | `{{baseUrl}}/user-games/{{userGameId}}` |
+| Headers | `Authorization: Bearer {{accessToken}}` |
+
+Response: `204 No Content` (empty body)
+
 ---
 
 ### 6. Get my profile

@@ -5,6 +5,34 @@ ai-instructions:
     Goal: Help implement features while maintaining security, code quality, and consistency.
     Package manager: bun (not npm or yarn).
 
+  shared-types-architecture: |
+    **Clean Separation Pattern:**
+    Shared types (@repo/types) are FRAMEWORK-AGNOSTIC and shared across web, mobile, and API.
+    API-specific validators are LOCAL to the API app (NestJS-only).
+
+    ✅ IN @repo/types (no dependencies, usable by all apps):
+      - TypeScript enums (GameStatus, UserRole, etc.)
+      - Interfaces/types (UserGameResponse, GameData, etc.)
+      - DTO contracts (CreateUserGameDto interface, UpdateUserGameDto interface)
+      - Request/response shapes
+
+    ❌ NOT in @repo/types (too API-specific):
+      - class-validator decorators (@IsNotEmpty, @IsEmail, etc.)
+      - NestJS-specific code
+      - class-transformer logic
+      - Server-side validation logic
+
+    ✅ IN apps/api (NestJS + class-validator):
+      - DTO classes with @Validators (CreateUserGameDto class with decorators)
+      - Server-side validation rules
+      - API-specific middleware/guards
+      - Error handling for validation
+
+    **Why this matters:**
+      Web/Mobile can import types without pulling NestJS dependencies
+      Each app implements validation appropriate to its environment (client vs server)
+      Monorepo stays clean and modular
+
   before-you-code:
     - "Verify the feature doesn't already exist by grepping the codebase"
     - "Check if related modules/services exist that you should extend"

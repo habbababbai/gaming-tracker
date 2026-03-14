@@ -47,6 +47,27 @@ src/
 
 **Rule:** Modules should not have circular dependencies. Use services to handle cross-module communication.
 
+### Shared Types Strategy
+
+The monorepo uses `@repo/types` for **framework-agnostic** types shared across API, web, and mobile:
+
+**In `@repo/types` (shared):**
+- Enums: `GameStatus`, `UserRole`, etc.
+- Interfaces: `UserGameResponse`, `GameData`, `LoginDto`, `RegisterDto`
+- DTO contracts: Request/response shapes (interfaces only)
+- No validators or framework-specific code
+
+**In `apps/api` (API-only):**
+- DTO classes with `class-validator` decorators: `CreateUserGameDto` class with `@IsNotEmpty`, `@IsEmail`, etc.
+- Server-side validation logic
+- NestJS-specific code (guards, interceptors, modules)
+
+**Why this split?**
+- Web/Mobile can import types without pulling NestJS dependencies
+- Shared types stay lightweight and reusable
+- Each app implements validation for its own layer (API validates on request, web/mobile validate client-side)
+- Clear separation: contracts (shared) vs implementations (local)
+
 ## Security Best Practices
 
 ### Authentication & Authorization
@@ -299,6 +320,138 @@ npm run test:e2e     # E2E tests
 - Add meaningful indexes on frequently queried fields
 - Use enums for status/rating fields
 - Cascade rules: think carefully about deletes (use ON DELETE CASCADE for relationships)
+
+## API Endpoints
+
+### User Games Endpoints
+
+**Base path:** `/user-games` (all endpoints require JWT authentication)
+
+#### Create User Game
+
+```
+POST /user-games
+Authorization: Bearer <token>
+Content-Type: application/json
+
+Request body:
+{
+  "igdbId": 109962,
+  "status": "todo"    // optional, defaults to "todo"
+}
+
+Response: 201 Created
+{
+  "data": {
+    "id": "uuid",
+    "userId": "user-uuid",
+    "gameId": "game-uuid",
+    "status": "todo",
+    "game": {
+      "id": "game-uuid",
+      "igdbId": 109962,
+      "name": "Elden Ring",
+      "coverUrl": "https://...",
+      "releaseYear": 2022
+    },
+    "createdAt": "2026-03-14T10:00:00Z",
+    "updatedAt": "2026-03-14T10:00:00Z"
+  }
+}
+
+Error cases:
+- 400: Invalid IGDB ID or status
+- 404: Game not found in IGDB
+- 409: User already has this game in collection
+```
+
+#### List User Games
+
+```
+GET /user-games?page=1&limit=20&status=playing
+Authorization: Bearer <token>
+
+Query parameters:
+- page: number (default: 1)
+- limit: number (default: 20)
+- status: GameStatus (optional filter by status: todo, playing, completed, dropped)
+
+Response: 200 OK
+{
+  "data": [
+    { /* UserGame object */ },
+    { /* UserGame object */ }
+  ],
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 42
+  }
+}
+```
+
+#### Get Single User Game
+
+```
+GET /user-games/:id
+Authorization: Bearer <token>
+
+Response: 200 OK
+{
+  "data": { /* UserGame object */ }
+}
+
+Error cases:
+- 404: UserGame not found
+- 403: User does not own this game record
+```
+
+#### Update Game Status
+
+```
+PATCH /user-games/:id
+Authorization: Bearer <token>
+Content-Type: application/json
+
+Request body:
+{
+  "status": "completed"
+}
+
+Valid status values: "todo", "playing", "completed", "dropped"
+
+Response: 200 OK
+{
+  "data": {
+    "id": "uuid",
+    "status": "completed",
+    "game": { /* game data */ },
+    "updatedAt": "2026-03-14T10:30:00Z",
+    ...
+  }
+}
+
+Error cases:
+- 400: Invalid or missing status
+- 404: UserGame not found
+- 403: User does not own this game record
+```
+
+#### Delete User Game
+
+```
+DELETE /user-games/:id
+Authorization: Bearer <token>
+
+Response: 204 No Content
+(empty body, confirms deletion)
+
+Error cases:
+- 404: UserGame not found
+- 403: User does not own this game record
+```
+
+---
 
 ## DTOs & Validation
 

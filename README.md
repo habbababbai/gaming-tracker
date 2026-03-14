@@ -31,14 +31,34 @@ bun run dev
 gaming-tracker/
 ├── apps/
 │   ├── api/       # Backend for web & mobile
+│   │   ├── src/
+│   │   ├── CLAUDE.md      # Dev guide & architecture
+│   │   ├── API.md         # Quick endpoint reference
+│   │   └── .agents        # AI instructions
 │   ├── web/       # Web app for tracker
 │   └── mobile/    # Mobile app for tracker
 ├── packages/
 │   ├── tsconfig/  # Shared tsconfig
-│   └── types/     # Shared types
+│   └── types/     # Shared types (framework-agnostic enums & interfaces)
 ├── turbo.json
 └── docker-compose.yml
 ```
+
+## Shared Types Architecture
+
+`packages/types` contains **framework-agnostic** types used by all apps:
+- TypeScript enums (`GameStatus`, etc.)
+- Interfaces & types (`UserGameResponse`, `GameData`, etc.)
+- DTO contracts (request/response shapes)
+
+**NOT in shared types:**
+- Validators or decorators (API-specific)
+- NestJS/Next.js/Expo-specific code
+- Implementation details
+
+Each app adds its own validation layer:
+- **API** (NestJS): Adds `class-validator` decorators to DTOs
+- **Web/Mobile**: Implements client-side form validation
 
 ## Roadmap
 

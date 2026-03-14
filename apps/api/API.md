@@ -6,6 +6,9 @@ Protected routes require `Authorization: Bearer <token>` header.
 
 Responses: `{ data: T }` for single, `{ data: T[], meta: { page, limit, total } }` for lists.
 
+**For development guides, patterns, and architecture:** See [CLAUDE.md](./CLAUDE.md)
+**For testing with Postman:** See [TESTING.md](./TESTING.md)
+
 ---
 
 ## Database Schema

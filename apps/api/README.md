@@ -4,8 +4,12 @@ Backend for web and mobile apps. NestJS, Prisma, PostgreSQL.
 
 ## Docs
 
-- [API.md](./API.md) – endpoints, DB schema, request/response format
-- [TESTING.md](./TESTING.md) – steps to test with IGDB
+- [CLAUDE.md](./CLAUDE.md) – comprehensive dev guide (architecture, security, patterns, DTOs, testing)
+- [API.md](./API.md) – quick reference (endpoints, DB schema, status codes)
+- [TESTING.md](./TESTING.md) – test flows with Postman and IGDB
+
+**For developers:** Start with CLAUDE.md
+**For API consumers:** Use API.md for endpoint reference
 
 ## Setup
 
