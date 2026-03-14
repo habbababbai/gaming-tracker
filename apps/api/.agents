@@ -1,0 +1,208 @@
+ai-instructions:
+  role: "NestJS API Development Assistant"
+  context: |
+    Gaming Tracker API built with NestJS, Prisma ORM, and PostgreSQL.
+    Goal: Help implement features while maintaining security, code quality, and consistency.
+    Package manager: bun (not npm or yarn).
+
+  shared-types-architecture: |
+    **Clean Separation Pattern:**
+    Shared types (@repo/types) are FRAMEWORK-AGNOSTIC and shared across web, mobile, and API.
+    API-specific validators are LOCAL to the API app (NestJS-only).
+
+    ✅ IN @repo/types (no dependencies, usable by all apps):
+      - TypeScript enums (GameStatus, UserRole, etc.)
+      - Interfaces/types (UserGameResponse, GameData, etc.)
+      - DTO contracts (CreateUserGameDto interface, UpdateUserGameDto interface)
+      - Request/response shapes
+
+    ❌ NOT in @repo/types (too API-specific):
+      - class-validator decorators (@IsNotEmpty, @IsEmail, etc.)
+      - NestJS-specific code
+      - class-transformer logic
+      - Server-side validation logic
+
+    ✅ IN apps/api (NestJS + class-validator):
+      - DTO classes with @Validators (CreateUserGameDto class with decorators)
+      - Server-side validation rules
+      - API-specific middleware/guards
+      - Error handling for validation
+
+    **Why this matters:**
+      Web/Mobile can import types without pulling NestJS dependencies
+      Each app implements validation appropriate to its environment (client vs server)
+      Monorepo stays clean and modular
+
+  before-you-code:
+    - "Verify the feature doesn't already exist by grepping the codebase"
+    - "Check if related modules/services exist that you should extend"
+    - "Read the relevant DTOs to understand existing validation patterns"
+    - "Check the database schema in prisma/schema.prisma for data structure"
+    - "Review similar existing endpoints to match code style"
+
+  implementation-rules:
+    security:
+      - "Always validate user ownership: check userId matches authenticated user"
+      - "Use DTO validation for every endpoint input (@Body, @Query, @Param)"
+      - "Never return passwordHash or sensitive fields in responses"
+      - "Use Prisma select/omit to exclude sensitive data"
+      - "Throw appropriate exceptions: UnauthorizedException (401), ForbiddenException (403)"
+      - "Log errors with context but never log passwords, tokens, PII"
+
+    code-style:
+      - "Files: kebab-case (user-games.controller.ts)"
+      - "Classes: PascalCase"
+      - "Methods/vars: camelCase"
+      - "Follow NestJS module structure: module → controller → service → DTO"
+      - "Extract complex logic to private methods in services"
+      - "Controllers should be thin (routing only), services have business logic"
+      - "Use readonly for constructor properties"
+      - "Type everything, avoid any"
+
+    database:
+      - "Use Prisma methods only (no raw SQL)"
+      - "Use select/omit to fetch only needed fields"
+      - "Always include pagination for list endpoints (skip/take)"
+      - "Eager-load relations with include when needed"
+      - "Use transactions for multi-step operations"
+      - "Don't expose UUIDs that could be enumerated"
+
+    testing:
+      - "Write unit tests for services (*.spec.ts)"
+      - "Test happy path + error cases"
+      - "Mock PrismaService in unit tests"
+      - "Target 80%+ service coverage"
+      - "Use describe/it from Jest"
+      - "Test validation, auth, and business logic"
+
+    performance:
+      - "Paginate all list endpoints"
+      - "Select only needed fields from database"
+      - "Avoid N+1 queries (use include/relations)"
+      - "Cache static data if queried frequently"
+      - "Profile with debug mode if endpoint is slow"
+
+  when-creating-endpoints:
+    - "Create DTO with validation in src/feature/dto/"
+    - "Add method to FeatureService with business logic"
+    - "Add route in FeatureController"
+    - "Add unit tests in feature.service.spec.ts"
+    - "Run npm test to verify"
+    - "Check response format matches existing pattern"
+    - "Verify auth/ownership checks if endpoint is protected"
+
+  common-patterns-to-follow:
+    - "Authentication guard: @UseGuards(JwtAuthGuard) or @Public() for exceptions"
+    - "Ownership check: const user = request.user; if (user.id !== ownerId) throw ForbiddenException"
+    - "List with pagination: skip/take params, validate with DefaultValuePipe(0)/DefaultValuePipe(10)"
+    - "Create: @Post() @HttpCode(HttpStatus.CREATED)"
+    - "Update: @Patch(':id')"
+    - "Delete: @Delete(':id') @HttpCode(HttpStatus.NO_CONTENT)"
+    - "Not found: throw new NotFoundException(`Resource not found`)"
+    - "Conflict: throw new ConflictException('Duplicate email')"
+
+  dto-validation-template: |
+    import { IsNotEmpty, IsString, IsEmail, MinLength, IsOptional, IsUUID } from 'class-validator';
+
+    export class CreateXyzDto {
+      @IsString()
+      @IsNotEmpty()
+      name: string;
+
+      @IsEmail()
+      email: string;
+
+      @MinLength(8)
+      password: string;
+
+      @IsOptional()
+      @IsUUID()
+      userId?: string;
+    }
+
+  service-method-template: |
+    async create(userId: string, dto: CreateXyzDto) {
+      // Validate ownership if needed
+      // Validate resource exists if creating relation
+      // Create with Prisma
+      // Select safe fields only
+      // Return or throw error
+      const xyz = await this.prisma.xyz.create({
+        data: { ...dto, userId },
+        select: { id: true, name: true, createdAt: true }, // Exclude sensitive
+      });
+      return xyz;
+    }
+
+  controller-route-template: |
+    @Controller('xyzs')
+    export class XyzsController {
+      constructor(private readonly xyz: XyzsService) {}
+
+      @Post()
+      @HttpCode(HttpStatus.CREATED)
+      async create(
+        @Body() dto: CreateXyzDto,
+        @Req() req: Request & { user: JwtPayload },
+      ) {
+        return { data: await this.xyz.create(req.user.id, dto) };
+      }
+
+      @Get(':id')
+      async getById(
+        @Param('id', ParseUUIDPipe) id: string,
+        @Req() req: Request & { user: JwtPayload },
+      ) {
+        return { data: await this.xyz.getById(req.user.id, id) };
+      }
+    }
+
+  error-responses:
+    400_bad_request: "Validation failed - missing/invalid fields"
+    401_unauthorized: "Invalid credentials - auth failed"
+    403_forbidden: "Not authorized - auth OK but user lacks permission"
+    404_not_found: "Resource not found - doesn't exist"
+    409_conflict: "Email already registered - duplicate constraint"
+    500_server_error: "Unexpected errors, log full context"
+
+  environment-variables:
+    required:
+      JWT_SECRET: "min 32 chars, strong random string"
+      DATABASE_URL: "postgres://user:pass@localhost:5432/gaming_tracker"
+      IGDB_CLIENT_ID: "IGDB API credentials"
+      IGDB_CLIENT_SECRET: "IGDB API credentials"
+    optional:
+      PORT: "default 4000"
+      NODE_ENV: "development|production"
+      LOG_LEVEL: "debug|info|warn|error"
+
+  git-workflow:
+    - "Branch naming: feature/xyz, fix/bug-name, docs/xyz"
+    - "Commit message: 'Add xyz endpoint', 'Fix auth validation', etc"
+    - "Run before commit: bun run format"
+    - "Run before commit: bun run lint:fix"
+    - "Run before commit: bun test"
+    - "Run before commit: bun run build"
+    - "Verify no sensitive data in commits (.env, passwords, keys)"
+
+  when-stuck:
+    - "Check CLAUDE.md for patterns and best practices"
+    - "Read similar endpoints in codebase (e.g., study existing controllers)"
+    - "Check Prisma docs for query patterns"
+    - "Check class-validator docs for validation decorators"
+    - "Run tests with npm run test:watch for quick feedback"
+    - "Use npm run start:debug to set breakpoints"
+
+  review-checklist:
+    - "DTO validates all inputs with appropriate decorators"
+    - "Service has all business logic, controller is thin"
+    - "User ownership verified for protected resources"
+    - "Sensitive fields excluded from responses (select/omit)"
+    - "Pagination added for list endpoints"
+    - "Error messages are descriptive but don't leak info"
+    - "Tests cover happy path and error cases"
+    - "Code is TypeScript-safe (no any types)"
+    - "Follows naming conventions (kebab-case files, camelCase vars)"
+    - "Builds without errors (npm run build)"
+    - "All tests pass (npm test)"
+    - "No sensitive data in code/commits"
