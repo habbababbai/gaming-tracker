@@ -10,7 +10,7 @@ Track your game backlog and collection. Monorepo: NestJS API, Next.js web, Expo 
 | web | Web app for tracker | Next.js (App Router) |
 | mobile | Mobile app for tracker | Expo, React Native |
 
-## Quick start
+## Quick Start
 
 ```bash
 bun install
@@ -21,162 +21,77 @@ cp apps/mobile/.env.example apps/mobile/.env
 bun run dev
 ```
 
-- API: http://localhost:4000
-- Web: http://localhost:3000
-- Mobile: `bunx expo start` in apps/mobile
+- **API:** http://localhost:4000
+- **Web:** http://localhost:3000
+- **Mobile:** `bunx expo start` in `apps/mobile`
 
-## Structure
+## Project Structure
 
 ```
 gaming-tracker/
 ├── apps/
-│   ├── api/       # Backend for web & mobile
-│   │   ├── src/
-│   │   ├── CLAUDE.md      # Dev guide & architecture
-│   │   ├── API.md         # Quick endpoint reference
-│   │   └── .agents        # AI instructions
-│   ├── web/       # Web app for tracker
-│   └── mobile/    # Mobile app for tracker
+│   ├── api/       # NestJS backend
+│   ├── web/       # Next.js web frontend
+│   └── mobile/    # Expo React Native app
 ├── packages/
-│   ├── tsconfig/  # Shared tsconfig
-│   └── types/     # Shared types (framework-agnostic enums & interfaces)
-├── turbo.json
-└── docker-compose.yml
+│   ├── tsconfig/  # Shared TypeScript config
+│   └── types/     # Shared types package
+├── ROADMAP.md
+├── CONTRIBUTING.md
+└── README.md (this file)
 ```
-
-## Shared Types Architecture
-
-**Goal:** Single source of truth for type contracts across all apps (API, Web, Mobile).
-
-### The Pattern
-
-`packages/types` contains **framework-agnostic** types shared by all apps:
-- ✅ TypeScript enums (`GameStatus`, `UserRole`, etc.)
-- ✅ Interfaces & types (`UserGameResponse`, `GameData`, `CreateUserGameDto`, etc.)
-- ✅ DTO contracts (request/response shapes)
-- ✅ Constants & configuration types
-
-**NOT in shared types:**
-- ❌ Validators or decorators (`@IsEmail`, `@IsNotEmpty`, etc.)
-- ❌ NestJS/Next.js/Expo-specific code
-- ❌ Framework dependencies
-- ❌ Implementation details
-
-### Why This Matters
-
-```
-Problem Without Clean Separation:
-  Web app imports @repo/types
-    → Pulls in class-validator (NestJS library)
-    → Bloats bundle size
-    → Adds Node.js deps to browser code
-
-Solution With Clean Separation:
-  Web app imports @repo/types
-    → Pure TypeScript interfaces only
-    → No framework dependencies
-    → Each app validates at its boundary
-```
-
-### Validation Pattern
-
-Each app implements validation appropriate to its environment:
-
-**API (NestJS - Server-side):**
-```typescript
-// In @repo/types (shared)
-export interface CreateUserGameDto {
-  igdbId: number;
-  status?: GameStatus;
-}
-
-// In apps/api (API-specific)
-export class CreateUserGameDto {
-  @IsNumber()
-  igdbId: number;
-
-  @IsOptional()
-  @IsEnum(GameStatus)
-  status?: GameStatus;
-}
-```
-
-**Web (Next.js - Client-side):**
-```typescript
-// Import interface from shared types
-import { CreateUserGameDto, GameStatus } from '@repo/types';
-
-// Validate using form library (Zod, React Hook Form, etc.)
-const schema = z.object({
-  igdbId: z.number(),
-  status: z.enum(Object.values(GameStatus)).optional(),
-});
-```
-
-**Mobile (Expo - Client-side):**
-```typescript
-// Same interface from shared types
-import { CreateUserGameDto, GameStatus } from '@repo/types';
-
-// Validate using mobile form validation
-const validateForm = (data: CreateUserGameDto) => {
-  // Validation logic
-};
-```
-
-### Guidelines for Contributing
-
-**When to add to `@repo/types`:**
-- Type used by 2+ apps
-- DTO that's part of API contract
-- Enum that's shared across apps
-- Response type that frontend needs
-
-**When to keep local:**
-- Validator classes (use in API only)
-- Service implementations
-- Framework-specific types
-- Internal utilities
-
-**See:** [`packages/types/src/index.ts`](./packages/types/src/index.ts) for guidelines
 
 ## Roadmap
 
-| Stage | Scope |
-|-------|-------|
-| **1. Backend core** | User, Game, UserGame, CRUD for statuses |
-| **2. Web MVP** | Auth, game list, add to collection |
-| **3. IGDB integration** | `/games/search`, DB cache |
-| **4. Mobile** | Login, list, change status |
+| Stage | Status | Description |
+|-------|--------|-------------|
+| **1. Backend Core** | 70% ✅ | User auth, game collection CRUD, IGDB search |
+| **2. Web MVP** | ⏳ | Login, game list, collection management |
+| **3. Mobile MVP** | ⏳ | iOS/Android app with core features |
+| **4. Polish & Prod** | ⏳ | Testing, monitoring, deployment |
 
-## Documentation & Resources
+**Full details:** [ROADMAP.md](./ROADMAP.md)
 
-### For All Developers
-- [ROADMAP.md](./ROADMAP.md) - Project stages & progress tracking
-- [Shared Types Guidelines](./packages/types/src/index.ts) - When/what to share
+## Documentation
 
-### For Backend Development
-- [apps/api/CLAUDE.md](./apps/api/CLAUDE.md) - Architecture, security, patterns
-- [apps/api/API.md](./apps/api/API.md) - Quick endpoint reference
-- [apps/api/TESTING.md](./apps/api/TESTING.md) - Testing with Postman
-- [apps/api/ROADMAP.md](./apps/api/ROADMAP.md) - Backend progress tracking
-- [apps/api/.agents](./apps/api/.agents) - AI development instructions
+### Project
+- [ROADMAP.md](./ROADMAP.md) - Project stages & progress
+- [CONTRIBUTING.md](./CONTRIBUTING.md) - How to contribute, PR naming conventions
 
-### For Frontend/Mobile Development
-- [Shared Types Architecture](#shared-types-architecture) - Type sharing pattern
-- API endpoints documented in [apps/api/API.md](./apps/api/API.md)
+### Backend (API)
+- [apps/api/CLAUDE.md](./apps/api/CLAUDE.md) - Architecture, security, best practices
+- [apps/api/API.md](./apps/api/API.md) - API endpoints reference
+- [apps/api/TESTING.md](./apps/api/TESTING.md) - How to test with Postman
+- [apps/api/ROADMAP.md](./apps/api/ROADMAP.md) - Backend feature tracking
 
----
+### Shared Types
+- [`packages/types/src/index.ts`](./packages/types/src/index.ts) - Shared type definitions (framework-agnostic enums, interfaces, DTOs)
 
 ## Commands
 
-- `bun run dev` – run all apps (turbo)
-- `bun run build` – build all
-- `bun run lint` – lint all
-- `bun run format` – format code
-- `bun test` – run all tests
+```bash
+# Development
+bun run dev          # Run all apps with hot reload
+bun run build        # Build all apps
+bun run lint         # Lint all code
+bun run format       # Format code
+bun test             # Run tests
 
-**In apps/api:**
-- `bun run db:migrate` – run database migrations
-- `bun run start:debug` – start with debugger
-- `bun run start:prod` – run production build
+# API specific
+cd apps/api
+bun run db:migrate   # Run database migrations
+bun run start:debug  # Start with debugger
+bunx prisma studio  # Open database GUI
+```
+
+## Getting Started
+
+**New to the project?**
+1. Read [ROADMAP.md](./ROADMAP.md) to understand project stages
+2. Check [apps/api/CLAUDE.md](./apps/api/CLAUDE.md) if working on backend
+3. See [CONTRIBUTING.md](./CONTRIBUTING.md) for PR naming conventions
+
+**Want to contribute?**
+1. Read [CONTRIBUTING.md](./CONTRIBUTING.md)
+2. Create a branch following naming convention
+3. Create a PR with `[SCOPE] - Description` format
