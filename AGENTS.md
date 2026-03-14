@@ -10,6 +10,21 @@ Read this before making changes. Hobby project – keep it simple.
 2. **Think critically** – Evaluate alternatives. Prefer simpler, maintainable solutions.
 3. **Minimize tokens** – Be concise. Avoid verbose comments and unnecessary prose.
 4. **Remove bloat** – No unnecessary deps, files, or code. Prefer fewer, smaller solutions. Be as concise as possible everywhere.
+5. **Check what user asks** – When user asks to check specific files (tests, specs, configs), READ THOSE FILES FIRST. Don't jump to tangential config files. Fix errors in the actual files mentioned.
+6. **Don't auto-run commands repeatedly** – Don't run tests/lint multiple times. Make fixes, then ASK user to run and share results. User runs: `bun run test`, `bun run lint:fix`.
+7. **Batch file reads** – Read multiple related files in one call when possible.
+8. **Skip obvious checks** – Don't re-read files you just wrote. Don't verify simple edits worked.
+
+---
+
+## Problem-Solving Rules
+
+When asked to investigate and fix errors:
+
+1. **Find root cause first** – Read error messages carefully. Trace through the code path. Don't guess with one-line changes hoping they work.
+2. **Understand before fixing** – Read all relevant files (configs, source, tests). Understand how systems interact.
+3. **Fix completely** – Don't stop at the first error. If there are multiple failures, analyze patterns and fix systematically.
+4. **Never apply blind fixes** – If a change doesn't work, understand why before trying another. Don't iterate randomly.
 
 ---
 

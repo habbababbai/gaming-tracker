@@ -234,50 +234,293 @@ Standardize API responses:
 
 ## Testing Strategy
 
-### Unit Tests
-
-- **Location:** `src/**/*.spec.ts`
-- **Coverage target:** Services 80%+, controllers 60%+
-- **What to test:**
-  - Service methods with different inputs
-  - Error cases (invalid input, not found, conflicts)
-  - Auth flows (valid/invalid credentials)
-  - Data transformations
-
-- **Example:**
-  ```typescript
-  describe('AuthService.login', () => {
-    it('should return user and token for valid credentials', async () => {
-      // ... test implementation
-    });
-
-    it('should throw UnauthorizedException for invalid email', async () => {
-      // ... test implementation
-    });
-  });
-  ```
-
-### E2E Tests
-
-- **Location:** `test/**/*.e2e-spec.ts`
-- **Scope:** Test full request→response cycles
-- **Command:** `npm run test:e2e`
-- **Recommended coverage:** Happy path + main error cases
-
-### Testing Utilities
-
-- Use `@nestjs/testing` for module compilation and dependency injection
-- Mock PrismaService in unit tests, use real DB in E2E
-- Test data: Create fixtures or seed minimal test data
-
 ### Running Tests
 
 ```bash
-npm test              # Run all unit tests once
-npm run test:watch   # Watch mode
-npm run test:cov     # Coverage report
-npm run test:e2e     # E2E tests
+bun run test        # unit tests
+bun run test:e2e    # e2e tests
+bun run test:cov    # unit tests with coverage
 ```
+
+---
+
+### Unit Tests (`src/**/*.spec.ts`)
+
+**Location:** Same directory as source file (e.g., `auth.service.spec.ts` next to `auth.service.ts`)
+
+**Structure:**
+```typescript
+import { Test, TestingModule } from '@nestjs/testing';
+import { MyService } from './my.service';
+import { PrismaService } from '../prisma/prisma.service';
+
+// Mock ESM packages at file top BEFORE imports are resolved
+jest.mock('igdb-api-node', () => ({
+  __esModule: true,
+  default: jest.fn(() => ({ /* mock client */ })),
+}));
+
+describe('MyService', () => {
+  let service: MyService;
+  let prisma: jest.Mocked<PrismaService>;
+
+  const mockPrisma = {
+    user: { findUnique: jest.fn(), create: jest.fn() },
+    // ... other models
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        MyService,
+        { provide: PrismaService, useValue: mockPrisma },
+      ],
+    }).compile();
+
+    service = module.get<MyService>(MyService);
+    prisma = module.get(PrismaService);
+    jest.clearAllMocks();
+  });
+
+  it('should do something', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({ id: '1', email: 'test@test.com' });
+    const result = await service.findUser('1');
+    expect(result.email).toBe('test@test.com');
+  });
+});
+```
+
+**Rules:**
+- Mock ALL external dependencies (Prisma, external APIs)
+- Use `jest.clearAllMocks()` in `beforeEach` to reset state
+- Test both success and error paths
+- For ESM packages that Jest can't parse, use `jest.mock()` at file top
+
+---
+
+### E2E Tests (`test/**/*.e2e-spec.ts`)
+
+**Location:** `apps/api/test/` directory
+
+**Structure:**
+```typescript
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import request from 'supertest';
+import { AppModule } from '../src/app.module';
+import { PrismaService } from '../src/prisma/prisma.service';
+import { AuthThrottleGuard } from '../src/auth/throttle.guard';
+
+describe('Feature (e2e)', () => {
+  let app: INestApplication;
+  let prisma: PrismaService;
+
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    })
+      // Override guards that interfere with tests
+      .overrideGuard(AuthThrottleGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
+
+    app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+    await app.init();
+
+    prisma = moduleFixture.get<PrismaService>(PrismaService);
+
+    // Clean database before tests
+    await prisma.userGame.deleteMany();
+    await prisma.game.deleteMany();
+    await prisma.user.deleteMany();
+  });
+
+  afterAll(async () => {
+    // Clean up after tests
+    await prisma.userGame.deleteMany();
+    await prisma.game.deleteMany();
+    await prisma.user.deleteMany();
+    await app.close();
+  });
+
+  it('should create resource', () => {
+    return request(app.getHttpServer())
+      .post('/resource')
+      .send({ field: 'value' })
+      .expect(201);
+  });
+});
+```
+
+---
+
+### Critical Test Rules
+
+#### 1. Test Isolation
+- **Each describe block must use unique test data** - don't reuse mock objects across sections
+- Clean up in `beforeAll`/`afterAll` at appropriate scope
+- Add error handling in `beforeAll` to fail fast:
+  ```typescript
+  beforeAll(async () => {
+    const res = await request(app.getHttpServer()).post('/resource').send(data);
+    if (!res.body.data) {
+      throw new Error(`Setup failed: ${JSON.stringify(res.body)}`);
+    }
+    resourceId = res.body.data.id;
+  });
+  ```
+
+#### 2. ESM Package Issues (igdb-api-node, apicalypse)
+Jest can't parse ESM packages. Two solutions:
+
+**For unit tests:** Mock at file top
+```typescript
+jest.mock('igdb-api-node', () => ({
+  __esModule: true,
+  default: jest.fn(() => ({ fields: jest.fn().mockReturnThis(), ... })),
+}));
+```
+
+**For e2e tests:** Use `moduleNameMapper` in `jest-e2e.json`
+```json
+{
+  "moduleNameMapper": {
+    "^igdb-api-node$": "<rootDir>/test/__mocks__/igdb-api-node.ts"
+  }
+}
+```
+
+Create mock file at `test/__mocks__/igdb-api-node.ts`:
+```typescript
+const mockClient = {
+  fields: () => mockClient,
+  search: () => mockClient,
+  where: () => mockClient,
+  limit: () => mockClient,
+  request: jest.fn().mockResolvedValue({ data: [] }),
+};
+export default jest.fn().mockReturnValue(mockClient);
+```
+
+#### 3. Rate Limiting in E2E Tests
+Override `AuthThrottleGuard` to disable rate limiting:
+```typescript
+.overrideGuard(AuthThrottleGuard)
+.useValue({ canActivate: () => true })
+```
+
+#### 4. Mocking Services in E2E
+Use `jest.spyOn` AFTER module compilation:
+```typescript
+const igdbService = moduleFixture.get<IgdbService>(IgdbService);
+jest.spyOn(igdbService, 'getById').mockImplementation(async (id) => {
+  if (id === 123) return mockGame;
+  return null;
+});
+```
+
+#### 5. ValidationPipe in E2E
+Must enable manually - not auto-applied in tests:
+```typescript
+app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+```
+
+---
+
+### Jest Configuration
+
+**Unit tests:** `apps/api/package.json`
+```json
+{
+  "jest": {
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": ["ts-jest", { "tsconfig": "tsconfig.spec.json" }]
+    },
+    "moduleNameMapper": {
+      "^@repo/types$": "<rootDir>/../../../packages/types/src/index.ts"
+    }
+  }
+}
+```
+
+**E2E tests:** `apps/api/test/jest-e2e.json`
+```json
+{
+  "rootDir": "..",
+  "testRegex": ".e2e-spec.ts$",
+  "setupFilesAfterEnv": ["<rootDir>/test/setup.ts"],
+  "moduleNameMapper": {
+    "^@repo/types$": "<rootDir>/../../packages/types/src/index.ts",
+    "^igdb-api-node$": "<rootDir>/test/__mocks__/igdb-api-node.ts"
+  }
+}
+```
+
+**TypeScript for tests:** `apps/api/tsconfig.spec.json`
+```json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "resolvePackageJsonExports": false,
+    "esModuleInterop": true
+  }
+}
+```
+
+---
+
+### Common Test Failures & Fixes
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `SyntaxError: Cannot use import statement outside a module` | ESM package (igdb-api-node) | Use `moduleNameMapper` or `jest.mock()` |
+| `429 Too Many Requests` | Rate limiting active | Override `AuthThrottleGuard` |
+| `res.body.data is undefined` | beforeAll setup failed | Add error handling, check response |
+| `400 Bad Request` on valid data | ValidationPipe not enabled | Add `app.useGlobalPipes(new ValidationPipe())` |
+| `409 Conflict` in nested describe | Test data collision | Use unique mock data per describe block |
+| `Foreign key constraint violated` | Game not in DB | Mock IgdbService.getById properly |
+| `TS5098 resolvePackageJsonExports` | tsconfig conflict | Use dedicated `tsconfig.spec.json` |
+
+---
+
+### Coverage Requirements
+
+**Must have unit tests (aim for 80%+ coverage):**
+- `*.service.ts` - all business logic
+
+**Tested via e2e only (excluded from unit coverage):**
+- `*.controller.ts` - HTTP layer
+- `*.guard.ts` - auth/throttle guards exercised by every protected route
+- `*.strategy.ts` - passport config exercised by auth flow
+- `prisma.service.ts` - lifecycle hooks, no business logic
+
+**Excluded from coverage (no tests needed):**
+- `*.module.ts` - DI configuration only
+- `*.dto.ts` - class definitions with decorators
+- `*.decorator.ts` - simple metadata attachers
+- `main.ts` - bootstrap code
+- `generated/**` - auto-generated Prisma client
+
+**Run coverage:** `bun run test:cov`
+
+---
+
+### Testing Checklist
+
+Before submitting test changes:
+- [ ] All tests pass locally (`bun run test && bun run test:e2e`)
+- [ ] Services have 80%+ line coverage
+- [ ] Each describe block uses unique test data
+- [ ] ESM packages are mocked (igdb-api-node)
+- [ ] Rate limiting is disabled for e2e
+- [ ] ValidationPipe is enabled for e2e
+- [ ] beforeAll has error handling for setup failures
+- [ ] afterAll cleans up test data
 
 ## Database Management
 

@@ -74,9 +74,11 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: 🧪 Run tests
-        run: bun test --coverage 2>/dev/null || bun test || echo "Tests not configured yet"
-        continue-on-error: true
+      - name: 📦 Generate Prisma client
+        run: cd apps/api && bunx prisma generate
+
+      - name: 🧪 Run unit tests
+        run: bun run test
 
   # Job 4: Security Check (dependency vulnerabilities)
   security:
@@ -133,7 +135,7 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
       - name: Fail if critical checks failed
-        if: needs.lint.result == 'failure'
+        if: needs.lint.result == 'failure' || needs.tests.result == 'failure'
         run: exit 1
 
       - name: All checks passed
