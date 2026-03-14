@@ -25,18 +25,16 @@ jobs:
       - name: Generate changelog entries
         run: bun run changelog:generate
 
-      - name: Commit and push changelog updates
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Create PR with changelog updates
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "[CONFIG] - Update changelogs from main merge"
+          title: "[CONFIG] - Update changelogs"
+          body: |
+            Automated changelog update from merged commits.
 
-          # Check if there are any changes to commit
-          if git diff --quiet; then
-            echo "✅ No changelog changes to commit"
-          else
-            echo "📝 Committing changelog updates..."
-            git add "*/CHANGELOG.md"
-            git commit -m "[CONFIG] - Update changelogs from main merge"
-            git push
-            echo "✅ Changelog updates pushed to main"
-          fi
+            This PR updates CHANGELOG.md files for apps with changes in the latest merge.
+          branch: changelog-update
+          delete-branch: true
+          labels: "automated"
