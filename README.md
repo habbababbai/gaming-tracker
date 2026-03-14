@@ -52,21 +52,6 @@ gaming-tracker/
 
 **Full details:** [ROADMAP.md](./ROADMAP.md)
 
-## Documentation
-
-### Project
-- [ROADMAP.md](./ROADMAP.md) - Project stages & progress
-- [CONTRIBUTING.md](./CONTRIBUTING.md) - How to contribute, PR naming conventions
-
-### Backend (API)
-- [apps/api/CLAUDE.md](./apps/api/CLAUDE.md) - Architecture, security, best practices
-- [apps/api/API.md](./apps/api/API.md) - API endpoints reference
-- [apps/api/TESTING.md](./apps/api/TESTING.md) - How to test with Postman
-- [apps/api/ROADMAP.md](./apps/api/ROADMAP.md) - Backend feature tracking
-
-### Shared Types
-- [`packages/types/src/index.ts`](./packages/types/src/index.ts) - Shared type definitions (framework-agnostic enums, interfaces, DTOs)
-
 ## Commands
 
 ```bash
@@ -86,12 +71,6 @@ bunx prisma studio  # Open database GUI
 
 ## Getting Started
 
-**New to the project?**
-1. Read [ROADMAP.md](./ROADMAP.md) to understand project stages
-2. Check [apps/api/CLAUDE.md](./apps/api/CLAUDE.md) if working on backend
-3. See [CONTRIBUTING.md](./CONTRIBUTING.md) for PR naming conventions
+**Contributing?** → [CONTRIBUTING.md](./CONTRIBUTING.md)
 
-**Want to contribute?**
-1. Read [CONTRIBUTING.md](./CONTRIBUTING.md)
-2. Create a branch following naming convention
-3. Create a PR with `[SCOPE] - Description` format
+**All documentation** → [DOCUMENTATION.md](./DOCUMENTATION.md)

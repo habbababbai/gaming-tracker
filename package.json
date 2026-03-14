@@ -19,5 +19,8 @@
     },
     "peerDependencies": {
         "typescript": "^5"
+    },
+    "dependencies": {
+        "husky": "^9.1.7"
     }
 }
