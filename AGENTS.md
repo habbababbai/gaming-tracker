@@ -64,6 +64,12 @@ When asked to investigate and fix errors:
 - **Tests** – write for critical logic (auth, core services, complex utils). Skip trivial glue code.
 - **Imports**: absolute paths where configured; group: external → internal → relative.
 
+## TypeScript
+
+- **No `any`** – no implicit any (`noImplicitAny: true`); avoid explicit `any`; use `unknown` and narrow, or proper types.
+- **Strict config** – each app must use a strict tsconfig: `strict: true`, `noImplicitAny: true`, `strictNullChecks: true`, `noFallthroughCasesInSwitch: true`. Reference: `apps/api/tsconfig.json`.
+- **Include explicit** – tsconfig `include` should list source and test globs so lint/tsc use the same program.
+
 ---
 
 ## File Structure

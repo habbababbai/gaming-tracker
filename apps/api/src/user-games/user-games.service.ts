@@ -17,6 +17,13 @@ export class UserGamesService {
     private readonly igdb: IgdbService,
   ) {}
 
+  /**
+   * Adds a game to the user's collection. Fetches game from IGDB, upserts Game in DB, then creates UserGame.
+   * @param userId - Authenticated user id
+   * @param dto - igdbId (required), status (optional, default todo)
+   * @throws NotFoundException if game not found in IGDB
+   * @throws ConflictException if user already has this game
+   */
   async create(userId: string, dto: CreateUserGameDto) {
     const igdbGame = await this.igdb.getById(dto.igdbId);
     if (!igdbGame) {
@@ -54,6 +61,14 @@ export class UserGamesService {
     });
   }
 
+  /**
+   * Lists user's games with pagination and optional status filter.
+   * @param userId - Authenticated user id
+   * @param page - Page number (default 1)
+   * @param limit - Page size (default 20)
+   * @param status - Optional filter by GameStatus
+   * @returns { data, meta: { page, limit, total } }
+   */
   async findAll(userId: string, page = 1, limit = 20, status?: GameStatus) {
     const skip = (page - 1) * limit;
     const where = { userId, ...(status && { status }) };
@@ -70,6 +85,11 @@ export class UserGamesService {
     return { data, meta: { page, limit, total } };
   }
 
+  /**
+   * Returns a single UserGame by id. Ensures the record belongs to the user.
+   * @throws NotFoundException if UserGame not found
+   * @throws ForbiddenException if user does not own the record
+   */
   async findOne(userId: string, id: string) {
     const userGame = await this.prisma.userGame.findUnique({
       where: { id },
@@ -80,6 +100,14 @@ export class UserGamesService {
     return userGame;
   }
 
+  /**
+   * Updates UserGame status. Verifies ownership via findOne.
+   * @param userId - Authenticated user id
+   * @param id - UserGame id
+   * @param dto - status (required)
+   * @throws NotFoundException if UserGame not found
+   * @throws ForbiddenException if user does not own the record
+   */
   async update(userId: string, id: string, dto: UpdateUserGameDto) {
     await this.findOne(userId, id);
     return this.prisma.userGame.update({
@@ -89,6 +117,11 @@ export class UserGamesService {
     });
   }
 
+  /**
+   * Removes a game from the user's collection. Verifies ownership via findOne.
+   * @throws NotFoundException if UserGame not found
+   * @throws ForbiddenException if user does not own the record
+   */
   async remove(userId: string, id: string) {
     await this.findOne(userId, id);
     await this.prisma.userGame.delete({ where: { id } });

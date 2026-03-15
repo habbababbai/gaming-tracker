@@ -75,7 +75,7 @@ The monorepo uses `@repo/types` for **framework-agnostic** types shared across A
 1. **JWT Configuration**
    - Secret stored in `JWT_SECRET` environment variable
    - Tokens extracted from `Authorization: Bearer <token>` header
-   - Validation includes user existence check (jwt.strategy.ts)
+   - **Session-backed tokens:** Each login creates a `Session` row (jti, userId, expiresAt). JWT payload includes `jti`. Strategy validates token and checks session exists and is not expired. Logout removes session(s); token then returns 401.
    - Default `JwtAuthGuard` applied globally to all routes
    - Use `@Public()` decorator to exclude routes from auth (register, login)
 
@@ -190,7 +190,8 @@ The monorepo uses `@repo/types` for **framework-agnostic** types shared across A
 
 ### TypeScript Best Practices
 
-- Always use explicit types, avoid `any`
+- **No `any`** – `noImplicitAny: true` in tsconfig; no explicit `any`; use `unknown` and narrow or proper types.
+- **Strict tsconfig** – `apps/api/tsconfig.json` uses `strict: true`, `strictNullChecks`, `strictBindCallApply`, `noFallthroughCasesInSwitch`. Do not relax these.
 - Use interfaces for complex object shapes (payloads, responses)
 - Use enums for fixed value sets (e.g., game statuses, rating scales)
 - Export types from service files, import in controllers/DTOs
@@ -220,16 +221,16 @@ Standardize API responses:
 
 - Code should be self-documenting - avoid obvious comments
 - Document WHY, not WHAT (code shows what, comments explain why)
-- Use JSDoc for public methods in services:
+- **JSDoc** for public service methods: AuthService, UsersService, IgdbService, UserGamesService. Use `@param`, `@returns`, `@throws` when non-obvious. Example:
   ```typescript
   /**
-   * Find a user by email and validate password.
-   * @param email - User email
-   * @param password - Plain-text password
-   * @returns User with tokens or throws UnauthorizedException
+   * Authenticates by email/password and returns user + access token.
+   * Creates a new session (multiple logins allowed).
+   * @throws UnauthorizedException if credentials invalid
    */
   async login(dto: LoginDto) { ... }
   ```
+- Skip JSDoc on trivial glue (simple controllers, obvious CRUD). Add for complex logic or non-obvious params/errors.
 - No commented-out code in commits - delete it
 
 ## Testing Strategy
@@ -241,6 +242,18 @@ bun run test        # unit tests
 bun run test:e2e    # e2e tests
 bun run test:cov    # unit tests with coverage
 ```
+
+### Finding and fixing all errors (lint + TypeScript)
+
+Run once to see every lint and type error in the API:
+
+```bash
+cd apps/api && bun run check
+```
+
+This runs `prisma generate`, then `lint` (with `--max-warnings 0`), then `type-check`. Fix reported files (lint first, then `tsc --noEmit`). Use `bun run lint:fix` for auto-fixable rules. Re-run `bun run check` until it passes.
+
+**Why did my IDE show errors but `bun run check` passed?** Type-aware ESLint rules (e.g. `no-unsafe-call`) use TypeScript’s type information. The IDE and the CLI must use the same TypeScript program. We use `parserOptions.project: ['./tsconfig.json']` and an explicit `include` in `tsconfig.json` so both use the same program. Always run `bun run check` from `apps/api` after pulling or changing schema; it runs `prisma generate` first so generated types exist. If the IDE still shows stale type-aware errors after `check` passes, restart the ESLint server (or reload the editor window).
 
 ---
 
@@ -506,7 +519,9 @@ app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 - `main.ts` - bootstrap code
 - `generated/**` - auto-generated Prisma client
 
-**Run coverage:** `bun run test:cov`
+**Run coverage:** `bun run test:cov`. Thresholds in `package.json` (global: 80% lines/statements/functions, 70% branches); CI runs `test:cov` and fails if below.
+
+**What’s included:** All `*.service.ts` under `src` (app, auth, igdb, users, user-games). **Excluded:** `src/generated/**`, `prisma/prisma.service.ts` (lifecycle only, no business logic). So every service that has business logic is measured.
 
 ---
 
@@ -565,6 +580,13 @@ Before submitting test changes:
 - Cascade rules: think carefully about deletes (use ON DELETE CASCADE for relationships)
 
 ## API Endpoints
+
+### Auth Endpoints
+
+- **POST /api/auth/register** – Body: email, password. Creates user and session; returns `{ data: { user, accessToken } }`. Public.
+- **POST /api/auth/login** – Body: email, password. Creates session; returns `{ data: { user, accessToken } }`. Public.
+- **POST /api/auth/logout** – Revokes current session (token invalid after). Protected. Returns 204.
+- **POST /api/auth/logout?all=true** – Revokes all sessions for the user. Protected. Returns 204.
 
 ### User Games Endpoints
 

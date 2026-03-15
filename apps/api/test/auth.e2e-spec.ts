@@ -31,12 +31,14 @@ describe('Auth (e2e)', () => {
 
     await prisma.userGame.deleteMany();
     await prisma.game.deleteMany();
+    await prisma.session.deleteMany();
     await prisma.user.deleteMany();
   });
 
   afterAll(async () => {
     await prisma.userGame.deleteMany();
     await prisma.game.deleteMany();
+    await prisma.session.deleteMany();
     await prisma.user.deleteMany();
     await app.close();
   });
@@ -170,6 +172,59 @@ describe('Auth (e2e)', () => {
       return request(app.getHttpServer())
         .get('/users/me')
         .set('Authorization', 'Bearer invalid-token')
+        .expect(401);
+    });
+  });
+
+  describe('POST /auth/logout', () => {
+    it('should return 204 and invalidate current token', async () => {
+      const registerRes = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({ email: 'logout-one@example.com', password: 'Password123' });
+      const token = registerRes.body.data.accessToken;
+      if (!token) throw new Error('Setup failed: no token');
+
+      await request(app.getHttpServer())
+        .post('/auth/logout')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(204);
+
+      return request(app.getHttpServer())
+        .get('/users/me')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(401);
+    });
+
+    it('should return 401 without token', () => {
+      return request(app.getHttpServer()).post('/auth/logout').expect(401);
+    });
+  });
+
+  describe('POST /auth/logout?all=true', () => {
+    it('should invalidate all sessions for user', async () => {
+      const registerRes = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({ email: 'logout-all@example.com', password: 'Password123' });
+      const token1 = registerRes.body.data.accessToken;
+      const loginRes = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email: 'logout-all@example.com', password: 'Password123' });
+      const token2 = loginRes.body.data.accessToken;
+      if (!token1 || !token2) throw new Error('Setup failed: no tokens');
+
+      await request(app.getHttpServer())
+        .post('/auth/logout?all=true')
+        .set('Authorization', `Bearer ${token1}`)
+        .expect(204);
+
+      await request(app.getHttpServer())
+        .get('/users/me')
+        .set('Authorization', `Bearer ${token1}`)
+        .expect(401);
+
+      return request(app.getHttpServer())
+        .get('/users/me')
+        .set('Authorization', `Bearer ${token2}`)
         .expect(401);
     });
   });

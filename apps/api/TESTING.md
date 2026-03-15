@@ -1,8 +1,12 @@
-# Testing the API (Postman)
+# Testing the API
 
 Base URL: `http://localhost:4000/api`
 
 Protected routes need `Authorization: Bearer {{accessToken}}` header.
+
+**E2E tests:** `bun run test:e2e` – covers auth (register, login, logout, logout all), users/me, user-games CRUD. See `test/*.e2e-spec.ts`.
+
+**Postman (manual):** flows below.
 
 ---
 
@@ -25,8 +29,9 @@ Protected routes need `Authorization: Bearer {{accessToken}}` header.
 | Method | POST |
 | URL | `{{baseUrl}}/auth/register` |
 | Headers | `Content-Type: application/json` |
-| Body | `{"email": "test@example.com", "password": "password123"}` |
+| Body | `{"email": "test@example.com", "password": "Password123"}` |
 
+Password must meet rules (8+ chars, upper, lower, number).  
 Response: `{ data: { user: {...}, accessToken: "..." } }`  
 Save `accessToken` → Postman env var.
 
@@ -39,7 +44,7 @@ Save `accessToken` → Postman env var.
 | Method | POST |
 | URL | `{{baseUrl}}/auth/login` |
 | Headers | `Content-Type: application/json` |
-| Body | `{"email": "test@example.com", "password": "password123"}` |
+| Body | `{"email": "test@example.com", "password": "Password123"}` |
 
 Save `accessToken`.
 
@@ -126,13 +131,39 @@ Response: `204 No Content` (empty body)
 
 ---
 
-### 7. Delete account
+### 7. Logout (current device)
+
+| Field | Value |
+|-------|-------|
+| Method | POST |
+| URL | `{{baseUrl}}/auth/logout` |
+| Headers | `Authorization: Bearer {{accessToken}}` |
+
+Response: `204 No Content`. The token is revoked; using it again returns `401`.
+
+---
+
+### 7a. Logout all devices
+
+| Field | Value |
+|-------|-------|
+| Method | POST |
+| URL | `{{baseUrl}}/auth/logout?all=true` |
+| Headers | `Authorization: Bearer {{accessToken}}` |
+
+Response: `204 No Content`. All sessions for that user are revoked (e.g. web + mobile).
+
+---
+
+### 8. Delete account
 
 | Field | Value |
 |-------|-------|
 | Method | DELETE |
 | URL | `{{baseUrl}}/users/me` |
 | Headers | `Authorization: Bearer {{accessToken}}` |
+
+Response: `204 No Content`. User and all their sessions and user-games are deleted.
 
 ---
 
@@ -146,3 +177,5 @@ Response: `204 No Content` (empty body)
 
 Tests tab for register/login:  
 `pm.environment.set("accessToken", pm.response.json().data.accessToken);`
+
+**Note:** After calling logout (7 or 7a), the same token will return `401` on protected routes until you login again.

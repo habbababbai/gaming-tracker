@@ -22,6 +22,16 @@ Responses: `{ data: T }` for single, `{ data: T[], meta: { page, limit, total } 
 | passwordHash| String   | bcrypt       |
 | createdAt   | DateTime | Default: now |
 
+### Session
+
+Stores issued tokens (one per login). Used to validate JWT on each request and to revoke on logout.
+
+| Column   | Type     | Notes                    |
+| -------- | -------- | ------------------------ |
+| jti      | String   | PK, unique token id      |
+| userId   | String   | FK → User, cascade delete|
+| expiresAt| DateTime | Token expiry             |
+
 ### Game (cache only)
 
 Cache of game data from third-party (IGDB). Populated when users add games.
@@ -34,18 +44,26 @@ Links a user to a game in their collection.
 
 ## Endpoints
 
-### Auth (public)
+### Auth
 
-| Method | Path                | Description |
-| ------ | ------------------- | ----------- |
-| POST   | `/api/auth/register`| Create account |
-| POST   | `/api/auth/login`   | Get JWT token |
+| Method | Path                | Auth  | Description |
+| ------ | ------------------- | ----- | ----------- |
+| POST   | `/api/auth/register`| No    | Create account |
+| POST   | `/api/auth/login`   | No    | Get JWT token |
+| POST   | `/api/auth/logout`  | Yes   | Revoke current session |
+| POST   | `/api/auth/logout?all=true` | Yes | Revoke all sessions for user |
+
+Tokens are session-based: each login creates a session; protected requests require a valid JWT whose session exists. Logout removes the session(s), so the token becomes invalid.
 
 **POST /api/auth/register** – Body: `{ "email": "...", "password": "..." }`  
-Password min 8 chars. Returns `{ data: { user, accessToken } }`.
+Password min 8 chars, uppercase, lowercase, number. Returns `{ data: { user, accessToken } }`.
 
 **POST /api/auth/login** – Body: `{ "email": "...", "password": "..." }`  
-Returns `{ data: { user, accessToken } }`.
+Returns `{ data: { user, accessToken } }`. Multiple logins (e.g. web + mobile) create multiple sessions; all stay valid until logout.
+
+**POST /api/auth/logout** – Requires `Authorization: Bearer <token>`. Revokes the current token’s session. Returns `204 No Content`.
+
+**POST /api/auth/logout?all=true** – Requires `Authorization: Bearer <token>`. Revokes all sessions for that user (all devices). Returns `204 No Content`.
 
 ---
 
@@ -61,10 +79,12 @@ Returns `{ data: { user, accessToken } }`.
 
 ### Users (protected)
 
-| Method | Path          | Description   |
-| ------ | ------------- | ------------- |
-| GET    | `/api/users/me`   | Current user  |
-| DELETE | `/api/users/me`   | Delete account |
+| Method | Path             | Description |
+| ------ | ---------------- | ----------- |
+| GET    | `/api/users/me`  | Current user |
+| DELETE | `/api/users/me`  | Delete account (requires valid JWT; cascades to sessions and user-games) |
+
+**DELETE /api/users/me** – Requires valid JWT. Permanently deletes the authenticated user and all their sessions and user-games. Returns `204 No Content`.
 
 ---
 

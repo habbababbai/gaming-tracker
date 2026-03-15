@@ -36,9 +36,10 @@ describe('AuthService', () => {
         {
           provide: PrismaService,
           useValue: {
-            user: {
-              findUnique: jest.fn(),
-              create: jest.fn(),
+            user: { findUnique: jest.fn(), create: jest.fn() },
+            session: {
+              create: jest.fn().mockResolvedValue(undefined),
+              deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
             },
           },
         },
@@ -46,6 +47,9 @@ describe('AuthService', () => {
           provide: JwtService,
           useValue: {
             sign: jest.fn().mockReturnValue('mock-jwt-token'),
+            decode: jest
+              .fn()
+              .mockReturnValue({ exp: Math.floor(Date.now() / 1000) + 604800 }),
           },
         },
       ],
@@ -69,7 +73,7 @@ describe('AuthService', () => {
       password: 'Password123',
     };
 
-    it('should hash password and create user on success', async () => {
+    it('should hash password, create user and session on success', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(null);
       (prisma.user.create as jest.Mock).mockResolvedValueOnce({
         id: 'user-456',
@@ -94,7 +98,18 @@ describe('AuthService', () => {
         where: { email: registerDto.email },
       });
       expect(prisma.user.create).toHaveBeenCalled();
-      expect(jwtService.sign).toHaveBeenCalledWith({ sub: 'user-456' });
+      expect(jwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({ sub: 'user-456', jti: expect.any(String) }),
+      );
+      expect(prisma.session.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            userId: 'user-456',
+            jti: expect.any(String),
+            expiresAt: expect.any(Date),
+          }),
+        }),
+      );
     });
 
     it('should throw ConflictException for duplicate email', async () => {
@@ -126,7 +141,7 @@ describe('AuthService', () => {
       password: 'Password123',
     };
 
-    it('should return user and JWT token on valid credentials', async () => {
+    it('should return user and JWT token and create session on valid credentials', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(mockUser);
       mockBcryptCompare.mockResolvedValueOnce(true);
       (jwtService.sign as jest.Mock).mockReturnValue('auth-token');
@@ -150,7 +165,10 @@ describe('AuthService', () => {
         loginDto.password,
         mockUser.passwordHash,
       );
-      expect(jwtService.sign).toHaveBeenCalledWith({ sub: mockUser.id });
+      expect(jwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({ sub: mockUser.id, jti: expect.any(String) }),
+      );
+      expect(prisma.session.create).toHaveBeenCalled();
     });
 
     it('should throw UnauthorizedException for invalid email', async () => {
@@ -179,6 +197,26 @@ describe('AuthService', () => {
       const result = await service.login(loginDto);
 
       expect(result.data.user).not.toHaveProperty('passwordHash');
+    });
+  });
+
+  describe('logout', () => {
+    it('should delete session by jti', async () => {
+      await service.logout('jti-123');
+
+      expect(prisma.session.deleteMany).toHaveBeenCalledWith({
+        where: { jti: 'jti-123' },
+      });
+    });
+  });
+
+  describe('logoutAll', () => {
+    it('should delete all sessions for user', async () => {
+      await service.logoutAll('user-123');
+
+      expect(prisma.session.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'user-123' },
+      });
     });
   });
 });

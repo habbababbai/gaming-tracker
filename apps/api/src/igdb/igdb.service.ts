@@ -60,6 +60,13 @@ export class IgdbService {
     };
   }
 
+  /**
+   * Searches IGDB for games by name.
+   * @param query - Search string
+   * @param limit - Max results (default 10)
+   * @returns Array of games (id, name, coverUrl, releaseYear)
+   * @throws ServiceUnavailableException if IGDB credentials missing or auth fails
+   */
   async search(query: string, limit = 10): Promise<IgdbGame[]> {
     const client = await this.getClient();
     const res = await client
@@ -70,6 +77,12 @@ export class IgdbService {
     return (res.data as object[]).map((g) => this.mapGame(g as never));
   }
 
+  /**
+   * Fetches a single game from IGDB by id.
+   * @param igdbId - IGDB game id
+   * @returns Game or null if not found
+   * @throws ServiceUnavailableException if IGDB credentials missing or auth fails
+   */
   async getById(igdbId: number): Promise<IgdbGame | null> {
     const client = await this.getClient();
     const res = await client

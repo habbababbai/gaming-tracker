@@ -5,11 +5,12 @@ Backend for web and mobile apps. NestJS, Prisma, PostgreSQL.
 ## Docs
 
 - [CLAUDE.md](./CLAUDE.md) – comprehensive dev guide (architecture, security, patterns, DTOs, testing)
-- [API.md](./API.md) – quick reference (endpoints, DB schema, status codes)
-- [TESTING.md](./TESTING.md) – test flows with Postman and IGDB
+- [API.md](./API.md) – quick reference (endpoints, DB schema, status codes, auth & sessions)
+- [TESTING.md](./TESTING.md) – test flows with Postman and E2E
+- [ROADMAP.md](./ROADMAP.md) – completed features and roadmap
 
-**For developers:** Start with CLAUDE.md
-**For API consumers:** Use API.md for endpoint reference
+**For developers:** Start with CLAUDE.md  
+**For API consumers:** Use API.md for endpoint reference (auth, logout, delete account, user-games).
 
 ## Setup
 
@@ -29,6 +30,10 @@ Backend for web and mobile apps. NestJS, Prisma, PostgreSQL.
 | `bun run test`       | Unit tests     |
 | `bun run test:e2e`   | E2E tests      |
 | `bunx prisma studio` | DB GUI         |
+
+## Auth
+
+JWT-based; tokens are session-backed. Each login creates a session; logout (single or all devices) revokes session(s). Delete account: `DELETE /api/users/me` with valid JWT. See [API.md](./API.md) for details.
 
 ## Default
 
