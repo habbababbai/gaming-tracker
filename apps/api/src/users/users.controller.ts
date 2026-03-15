@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthUser, type AuthUserPayload } from '../auth/user.decorator.js';
+import { wrapData } from '../common/index.js';
 import { UsersService } from './users.service.js';
 import { UpdateProfileDto } from './dto/update-profile.dto.js';
 
@@ -20,12 +21,12 @@ export class UsersController {
 
   @Get('me')
   getMe(@AuthUser() user: AuthUserPayload) {
-    return this.users.findById(user.id).then((data) => ({ data }));
+    return this.users.findById(user.id).then(wrapData);
   }
 
   @Patch('me')
   updateMe(@AuthUser() user: AuthUserPayload, @Body() dto: UpdateProfileDto) {
-    return this.users.updateProfile(user.id, dto).then((data) => ({ data }));
+    return this.users.updateProfile(user.id, dto).then(wrapData);
   }
 
   @Delete('me')

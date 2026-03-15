@@ -6,32 +6,15 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
+import {
+  getExpFromDecoded,
+  getSessionDelegate,
+  SALT_ROUNDS,
+  userProfileSelect,
+} from '../common/index.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { LoginDto } from './dto/login.dto.js';
 import { RegisterDto } from './dto/register.dto.js';
-
-const SALT_ROUNDS = 12;
-
-interface SessionDelegate {
-  create(args: {
-    data: { jti: string; userId: string; expiresAt: Date };
-  }): Promise<unknown>;
-  deleteMany(args: {
-    where: { jti?: string; userId?: string };
-  }): Promise<unknown>;
-}
-
-function getExpFromDecoded(decoded: unknown): number {
-  if (
-    decoded === null ||
-    typeof decoded !== 'object' ||
-    !('exp' in decoded) ||
-    typeof (decoded as { exp: unknown }).exp !== 'number'
-  ) {
-    throw new Error('Invalid token payload');
-  }
-  return (decoded as { exp: number }).exp;
-}
 
 @Injectable()
 export class AuthService {
@@ -53,9 +36,8 @@ export class AuthService {
     const token = this.jwt.sign({ sub: userId, jti });
     const exp = getExpFromDecoded(this.jwt.decode(token));
     const expiresAt = new Date(exp * 1000);
-    const sessionDb: SessionDelegate = this.prisma
-      .session as unknown as SessionDelegate;
-    await sessionDb.create({ data: { jti, userId, expiresAt } });
+    const session = getSessionDelegate(this.prisma);
+    await session.create({ data: { jti, userId, expiresAt } });
     return { accessToken: token };
   }
 
@@ -80,18 +62,7 @@ export class AuthService {
         nick: dto.nick.trim(),
         dateOfBirth: new Date(dto.dateOfBirth),
       },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        nick: true,
-        dateOfBirth: true,
-        avatarUrl: true,
-        locale: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: userProfileSelect,
     });
     const { accessToken } = await this.createSession(user.id);
     return { data: { user, accessToken } };
@@ -123,9 +94,7 @@ export class AuthService {
    * @param jti - Token id from JWT payload
    */
   async logout(jti: string): Promise<void> {
-    const sessionDb: SessionDelegate = this.prisma
-      .session as unknown as SessionDelegate;
-    await sessionDb.deleteMany({ where: { jti } });
+    await getSessionDelegate(this.prisma).deleteMany({ where: { jti } });
   }
 
   /**
@@ -133,8 +102,6 @@ export class AuthService {
    * @param userId - User id
    */
   async logoutAll(userId: string): Promise<void> {
-    const sessionDb: SessionDelegate = this.prisma
-      .session as unknown as SessionDelegate;
-    await sessionDb.deleteMany({ where: { userId } });
+    await getSessionDelegate(this.prisma).deleteMany({ where: { userId } });
   }
 }
