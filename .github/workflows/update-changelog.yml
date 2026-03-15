@@ -1,17 +1,21 @@
 name: Update Changelog
 
+# Only when a PR is merged to main (not on every push). Skip when the merged PR is this bot's own changelog PR.
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches: [main]
 
 jobs:
   update-changelog:
     name: Generate and Update Changelogs
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true && github.event.pull_request.head.ref != 'changelog-update'
     steps:
       - name: Checkout code with full history
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
 
       - name: Setup Bun
@@ -25,7 +29,13 @@ jobs:
       - name: Generate changelog entries
         run: bun run changelog:generate
 
+      - name: Check for changelog changes
+        id: changes
+        run: |
+          if git diff --quiet; then echo "changed=false" >> $GITHUB_OUTPUT; else echo "changed=true" >> $GITHUB_OUTPUT; fi
+
       - name: Create PR with changelog updates
+        if: steps.changes.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
