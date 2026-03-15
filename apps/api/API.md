@@ -15,12 +15,19 @@ Responses: `{ data: T }` for single, `{ data: T[], meta: { page, limit, total } 
 
 ### User
 
-| Column      | Type     | Notes        |
-| ----------- | -------- | ------------ |
-| id          | String   | CUID, PK     |
-| email       | String   | Unique       |
-| passwordHash| String   | bcrypt       |
-| createdAt   | DateTime | Default: now |
+| Column       | Type     | Notes              |
+| ------------ | -------- | ------------------ |
+| id           | String   | CUID, PK           |
+| email        | String   | Unique             |
+| passwordHash | String   | bcrypt             |
+| firstName    | String   | Required           |
+| lastName     | String   | Required           |
+| nick         | String   | Required           |
+| dateOfBirth  | Date     | Required           |
+| avatarUrl    | String?  | Optional           |
+| locale       | String   | Default: `en`      |
+| createdAt    | DateTime | Default: now       |
+| updatedAt    | DateTime | Required           |
 
 ### Session
 
@@ -55,8 +62,7 @@ Links a user to a game in their collection.
 
 Tokens are session-based: each login creates a session; protected requests require a valid JWT whose session exists. Logout removes the session(s), so the token becomes invalid.
 
-**POST /api/auth/register** – Body: `{ "email": "...", "password": "..." }`  
-Password min 8 chars, uppercase, lowercase, number. Returns `{ data: { user, accessToken } }`.
+**POST /api/auth/register** – Body: `{ "email", "password", "firstName", "lastName", "nick", "dateOfBirth" }` (all required). Optional: `avatarUrl`. Password min 8 chars, uppercase, lowercase, number. `dateOfBirth`: ISO date string (e.g. `1990-01-15`). Returns `{ data: { user, accessToken } }`.
 
 **POST /api/auth/login** – Body: `{ "email": "...", "password": "..." }`  
 Returns `{ data: { user, accessToken } }`. Multiple logins (e.g. web + mobile) create multiple sessions; all stay valid until logout.
@@ -81,10 +87,15 @@ Returns `{ data: { user, accessToken } }`. Multiple logins (e.g. web + mobile) c
 
 | Method | Path             | Description |
 | ------ | ---------------- | ----------- |
-| GET    | `/api/users/me`  | Current user |
-| DELETE | `/api/users/me`  | Delete account (requires valid JWT; cascades to sessions and user-games) |
+| GET    | `/api/users/me`  | Current user profile |
+| PATCH  | `/api/users/me`  | Update profile (partial) |
+| DELETE | `/api/users/me`  | Delete account (cascades to sessions and user-games) |
 
-**DELETE /api/users/me** – Requires valid JWT. Permanently deletes the authenticated user and all their sessions and user-games. Returns `204 No Content`.
+**GET /api/users/me** – Returns `{ data: user }` (no passwordHash).
+
+**PATCH /api/users/me** – Body: optional `firstName`, `lastName`, `nick`, `dateOfBirth` (ISO date), `avatarUrl` (URL or empty to clear). Only provided fields are updated; required fields cannot be cleared to empty. Returns `{ data: user }`.
+
+**DELETE /api/users/me** – Permanently deletes the authenticated user and all their sessions and user-games. Returns `204 No Content`.
 
 ---
 

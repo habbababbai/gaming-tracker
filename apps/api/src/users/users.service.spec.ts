@@ -126,6 +126,87 @@ describe('UsersService', () => {
         data: {},
       });
     });
+
+    it('should update dateOfBirth and pass Date to prisma', async () => {
+      const updated = {
+        ...mockUser,
+        dateOfBirth: new Date('1995-06-15'),
+        updatedAt: new Date('2026-03-15'),
+      };
+      jest.spyOn(prisma.user, 'update').mockResolvedValue(updated as never);
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(updated as never);
+
+      await service.updateProfile('user-123', {
+        dateOfBirth: '1995-06-15',
+      });
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-123' },
+        data: { dateOfBirth: new Date('1995-06-15') },
+      });
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'user-123' },
+        select: expect.any(Object),
+      });
+    });
+
+    it('should set avatarUrl when provided', async () => {
+      const updated = {
+        ...mockUser,
+        avatarUrl: 'https://example.com/avatar.png',
+        updatedAt: new Date('2026-03-15'),
+      };
+      jest.spyOn(prisma.user, 'update').mockResolvedValue(updated as never);
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(updated as never);
+
+      await service.updateProfile('user-123', {
+        avatarUrl: 'https://example.com/avatar.png',
+      });
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-123' },
+        data: { avatarUrl: 'https://example.com/avatar.png' },
+      });
+    });
+
+    it('should clear avatarUrl when given empty string', async () => {
+      const updated = { ...mockUser, avatarUrl: null, updatedAt: new Date() };
+      jest.spyOn(prisma.user, 'update').mockResolvedValue(updated as never);
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(updated as never);
+
+      await service.updateProfile('user-123', { avatarUrl: '' });
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-123' },
+        data: { avatarUrl: null },
+      });
+    });
+
+    it('should ignore empty firstName and lastName', async () => {
+      jest.spyOn(prisma.user, 'update').mockResolvedValue(mockUser as never);
+      jest
+        .spyOn(prisma.user, 'findUnique')
+        .mockResolvedValue(mockUser as never);
+
+      await service.updateProfile('user-123', {
+        firstName: '  ',
+        lastName: '',
+      });
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-123' },
+        data: {},
+      });
+    });
+
+    it('should throw when user does not exist', async () => {
+      const err = new Error('Record not found');
+      jest.spyOn(prisma.user, 'update').mockRejectedValue(err);
+
+      await expect(
+        service.updateProfile('missing', { firstName: 'X' }),
+      ).rejects.toThrow('Record not found');
+    });
   });
 
   describe('remove', () => {
@@ -144,8 +225,16 @@ describe('UsersService', () => {
 
       const result = await service.remove(mockUser.id);
 
-      // The remove method returns void, so result should be undefined
       expect(result).toBeUndefined();
+    });
+
+    it('should propagate error when delete fails (e.g. user not found)', async () => {
+      const err = new Error('Record to delete does not exist');
+      jest.spyOn(prisma.user, 'delete').mockRejectedValue(err);
+
+      await expect(service.remove('missing')).rejects.toThrow(
+        'Record to delete does not exist',
+      );
     });
   });
 });

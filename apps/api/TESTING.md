@@ -29,9 +29,9 @@ Protected routes need `Authorization: Bearer {{accessToken}}` header.
 | Method | POST |
 | URL | `{{baseUrl}}/auth/register` |
 | Headers | `Content-Type: application/json` |
-| Body | `{"email": "test@example.com", "password": "Password123"}` |
+| Body | `{"email": "test@example.com", "password": "Password123", "firstName": "Test", "lastName": "User", "nick": "test", "dateOfBirth": "1990-01-01"}` |
 
-Password must meet rules (8+ chars, upper, lower, number).  
+All fields required. Password: 8+ chars, upper, lower, number. `dateOfBirth`: ISO date (e.g. `1990-01-01`).  
 Response: `{ data: { user: {...}, accessToken: "..." } }`  
 Save `accessToken` → Postman env var.
 
@@ -128,6 +128,19 @@ Response: `204 No Content` (empty body)
 | Method | GET |
 | URL | `{{baseUrl}}/users/me` |
 | Headers | `Authorization: Bearer {{accessToken}}` |
+
+---
+
+### 6a. Update my profile (PATCH)
+
+| Field | Value |
+|-------|-------|
+| Method | PATCH |
+| URL | `{{baseUrl}}/users/me` |
+| Headers | `Content-Type: application/json`, `Authorization: Bearer {{accessToken}}` |
+| Body | `{"firstName": "Jane", "nick": "jane"}` or `{"avatarUrl": "https://example.com/avatar.png"}` |
+
+Optional: `firstName`, `lastName`, `nick`, `dateOfBirth` (ISO date), `avatarUrl` (URL or `""` to clear). Only sent fields are updated.
 
 ---
 
