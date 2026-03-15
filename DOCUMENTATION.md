@@ -31,10 +31,10 @@ Complete guide to all documentation files in this repository.
 
 ## 🤖 GitHub Configuration & Setup
 
-- [.github/README.md](./.github/README.md) - Overview of GitHub configuration
+- [.github/README-GH_CONFIG.md](./.github/README-GH_CONFIG.md) - GitHub config overview and quick start
 - [.github/SETUP_GUIDE.md](./.github/SETUP_GUIDE.md) - GitHub Actions setup instructions
 - [.github/CODE_QUALITY_SETUP.md](./.github/CODE_QUALITY_SETUP.md) - Technical guide for 3-layer protection
-- [.github/PR_VALIDATION_QUICK_START.md](./.github/PR_VALIDATION_QUICK_START.md) - Quick reference for PR validation
+- [.github/CHANGELOG_FLOW.md](./.github/CHANGELOG_FLOW.md) - Changelog automation
 
 ---
 
