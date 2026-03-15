@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Extend user fields, update user endpoints (#23)
+
+
 
 ### Changed
 - Config changes, CI fix, add clinic to BE (#18)
