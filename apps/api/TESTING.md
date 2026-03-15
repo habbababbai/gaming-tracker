@@ -4,7 +4,7 @@ Base URL: `http://localhost:4000/api`
 
 Protected routes need `Authorization: Bearer {{accessToken}}` header.
 
-**E2E tests:** `bun run test:e2e` – covers auth (register, login, logout, logout all), users/me, user-games CRUD. See `test/*.e2e-spec.ts`.
+**E2E tests:** `bun run test:e2e` – covers auth (register, login, logout, logout all), users/me, user-games CRUD. See `test/*.e2e-spec.ts`. Requires `DATABASE_URL` and a running PostgreSQL (e.g. `docker compose up -d`).
 
 **Postman (manual):** flows below.
 

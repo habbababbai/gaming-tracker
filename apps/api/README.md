@@ -31,7 +31,7 @@ Backend for web and mobile apps. NestJS, Prisma, PostgreSQL.
 | `bun run db:migrate`  | Run migrations     |
 | `bun run build`       | Build to dist/     |
 | `bun run test`        | Unit tests         |
-| `bun run test:e2e`    | E2E tests          |
+| `bun run test:e2e`    | E2E tests (requires DB) |
 | `bunx prisma studio`  | DB GUI             |
 
 ### Run modes (dev / dev:debug / start / start:prod / start:debug)

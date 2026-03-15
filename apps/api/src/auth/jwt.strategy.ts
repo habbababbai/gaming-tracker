@@ -1,26 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { type JwtPayload } from '@repo/types';
+import { getSessionDelegate } from '../common/index.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-
-export interface JwtPayload {
-  sub: string;
-  jti: string;
-  iat?: number;
-  exp?: number;
-}
-
-export interface SessionWithUser {
-  expiresAt: Date;
-  user: { id: string; email: string; createdAt: Date } | null;
-}
-
-interface SessionFindDelegate {
-  findUnique(args: {
-    where: { jti: string };
-    include: { user: { select: { id: true; email: true; createdAt: true } } };
-  }): Promise<SessionWithUser | null>;
-}
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -42,15 +25,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     createdAt: Date;
     jti: string;
   }> {
-    const sessionDb: SessionFindDelegate = this.prisma
-      .session as unknown as SessionFindDelegate;
-    const session = await sessionDb.findUnique({
-      where: { jti: payload.jti },
+    const { jti } = payload;
+    const session = await getSessionDelegate(this.prisma).findUnique({
+      where: { jti },
       include: { user: { select: { id: true, email: true, createdAt: true } } },
     });
     if (!session || session.expiresAt < new Date() || !session.user) {
       throw new UnauthorizedException();
     }
-    return { ...session.user, jti: payload.jti };
+    return { ...session.user, jti };
   }
 }

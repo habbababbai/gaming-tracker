@@ -1,11 +1,7 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import type { AuthUserPayload } from '@repo/types';
 
-export interface AuthUserPayload {
-  id: string;
-  email: string;
-  createdAt: Date;
-  jti: string;
-}
+export type { AuthUserPayload } from '@repo/types';
 
 export const AuthUser = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): AuthUserPayload => {

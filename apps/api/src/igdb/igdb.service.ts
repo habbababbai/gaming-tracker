@@ -1,12 +1,6 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import igdb from 'igdb-api-node';
-
-export interface IgdbGame {
-  id: number;
-  name: string;
-  coverUrl: string | null;
-  releaseYear: number | null;
-}
+import type { IgdbGame } from '@repo/types';
 
 const COVER_BASE = 'https://images.igdb.com/igdb/image/upload/t_cover_big';
 

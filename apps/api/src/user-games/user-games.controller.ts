@@ -15,6 +15,7 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { GameStatus } from '@repo/types';
 import { AuthUser, type AuthUserPayload } from '../auth/user.decorator.js';
+import { wrapData } from '../common/index.js';
 import { UserGamesService } from './user-games.service.js';
 import { CreateUserGameDto } from './dto/create-user-game.dto.js';
 import { UpdateUserGameDto } from './dto/update-user-game.dto.js';
@@ -28,7 +29,7 @@ export class UserGamesController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(@AuthUser() user: AuthUserPayload, @Body() dto: CreateUserGameDto) {
-    return this.userGames.create(user.id, dto).then((data) => ({ data }));
+    return this.userGames.create(user.id, dto).then(wrapData);
   }
 
   @Get()
@@ -43,7 +44,7 @@ export class UserGamesController {
 
   @Get(':id')
   findOne(@AuthUser() user: AuthUserPayload, @Param('id') id: string) {
-    return this.userGames.findOne(user.id, id).then((data) => ({ data }));
+    return this.userGames.findOne(user.id, id).then(wrapData);
   }
 
   @Patch(':id')
@@ -52,7 +53,7 @@ export class UserGamesController {
     @Param('id') id: string,
     @Body() dto: UpdateUserGameDto,
   ) {
-    return this.userGames.update(user.id, id, dto).then((data) => ({ data }));
+    return this.userGames.update(user.id, id, dto).then(wrapData);
   }
 
   @Delete(':id')

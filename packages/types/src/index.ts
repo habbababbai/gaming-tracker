@@ -39,6 +39,31 @@ export interface LoginDto {
 export interface RegisterDto {
   email: string;
   password: string;
+  firstName: string;
+  lastName: string;
+  nick: string;
+  dateOfBirth: string;
+}
+
+export interface AuthUserPayload {
+  id: string;
+  email: string;
+  createdAt: Date;
+  jti: string;
+}
+
+export interface JwtPayload {
+  sub: string;
+  jti: string;
+  iat?: number;
+  exp?: number;
+}
+
+export interface IgdbGame {
+  id: number;
+  name: string;
+  coverUrl: string | null;
+  releaseYear: number | null;
 }
 
 /**
