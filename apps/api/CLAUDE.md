@@ -22,6 +22,7 @@ The app follows NestJS module pattern with clear separation of concerns:
 
 ```
 src/
+├── common/            # Shared helpers (prisma session delegate, jwt, response wrap, constants)
 ├── auth/              # Authentication (JWT, strategies, guards)
 ├── users/             # User management
 ├── games/             # Game catalog
@@ -327,6 +328,8 @@ describe('MyService', () => {
 
 **Location:** `apps/api/test/` directory
 
+**Requirement:** E2E tests need `DATABASE_URL` and a running PostgreSQL (e.g. `docker compose up -d` from repo root). Without a DB, cleanup fails with a clear error. Always call `await app.close()` in `afterAll` so Jest can exit without "Force exiting" / open handles.
+
 **Structure:**
 ```typescript
 import { Test, TestingModule } from '@nestjs/testing';
@@ -355,16 +358,16 @@ describe('Feature (e2e)', () => {
 
     prisma = moduleFixture.get<PrismaService>(PrismaService);
 
-    // Clean database before tests
     await prisma.userGame.deleteMany();
     await prisma.game.deleteMany();
+    await prisma.session.deleteMany();
     await prisma.user.deleteMany();
   });
 
   afterAll(async () => {
-    // Clean up after tests
     await prisma.userGame.deleteMany();
     await prisma.game.deleteMany();
+    await prisma.session.deleteMany();
     await prisma.user.deleteMany();
     await app.close();
   });
