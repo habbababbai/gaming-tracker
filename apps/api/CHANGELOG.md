@@ -7,10 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- Config changes, CI fix, add clinic to BE (#18)
 
 ### Changed
+- Config changes, CI fix, add clinic to BE (#18)
 - Logout logic and endpoint (#16)
 - Setup unit tests for API (#9)
 - Setup Postgres, Nest.js and Endpoints (#1)
