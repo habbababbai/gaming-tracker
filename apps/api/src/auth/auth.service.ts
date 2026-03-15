@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { LoginDto } from './dto/login.dto.js';
 import { RegisterDto } from './dto/register.dto.js';
@@ -18,6 +19,15 @@ export class AuthService {
     private readonly jwt: JwtService,
   ) {}
 
+  private async createSession(userId: string): Promise<{ accessToken: string }> {
+    const jti = randomUUID();
+    const token = this.jwt.sign({ sub: userId, jti });
+    const payload = this.jwt.decode(token) as { exp: number };
+    const expiresAt = new Date(payload.exp * 1000);
+    await this.prisma.session.create({ data: { jti, userId, expiresAt } });
+    return { accessToken: token };
+  }
+
   async register(dto: RegisterDto) {
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -30,8 +40,8 @@ export class AuthService {
       data: { email: dto.email, passwordHash },
       select: { id: true, email: true, createdAt: true },
     });
-    const token = this.jwt.sign({ sub: user.id });
-    return { data: { user, accessToken: token } };
+    const { accessToken } = await this.createSession(user.id);
+    return { data: { user, accessToken } };
   }
 
   async login(dto: LoginDto) {
@@ -45,12 +55,20 @@ export class AuthService {
     if (!ok) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    const token = this.jwt.sign({ sub: user.id });
+    const { accessToken } = await this.createSession(user.id);
     return {
       data: {
         user: { id: user.id, email: user.email, createdAt: user.createdAt },
-        accessToken: token,
+        accessToken,
       },
     };
+  }
+
+  async logout(jti: string): Promise<void> {
+    await this.prisma.session.deleteMany({ where: { jti } });
+  }
+
+  async logoutAll(userId: string): Promise<void> {
+    await this.prisma.session.deleteMany({ where: { userId } });
   }
 }

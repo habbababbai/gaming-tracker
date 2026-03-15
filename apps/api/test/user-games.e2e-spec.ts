@@ -79,6 +79,7 @@ describe('UserGames (e2e)', () => {
 
     await prisma.userGame.deleteMany();
     await prisma.game.deleteMany();
+    await prisma.session.deleteMany();
     await prisma.user.deleteMany();
 
     const res1 = await request(app.getHttpServer())
@@ -96,6 +97,7 @@ describe('UserGames (e2e)', () => {
   afterAll(async () => {
     await prisma.userGame.deleteMany();
     await prisma.game.deleteMany();
+    await prisma.session.deleteMany();
     await prisma.user.deleteMany();
     await app.close();
   });

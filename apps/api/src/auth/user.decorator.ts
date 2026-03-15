@@ -4,6 +4,7 @@ export interface AuthUserPayload {
   id: string;
   email: string;
   createdAt: Date;
+  jti: string;
 }
 
 export const AuthUser = createParamDecorator(

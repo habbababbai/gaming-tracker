@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 
 export interface JwtPayload {
   sub: string;
+  jti: string;
   iat?: number;
   exp?: number;
 }
@@ -24,11 +25,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: payload.sub },
-      select: { id: true, email: true, createdAt: true },
+    const session = await this.prisma.session.findUnique({
+      where: { jti: payload.jti },
+      include: { user: { select: { id: true, email: true, createdAt: true } } },
     });
-    if (!user) throw new UnauthorizedException();
-    return user;
+    if (
+      !session ||
+      session.expiresAt < new Date() ||
+      !session.user
+    ) {
+      throw new UnauthorizedException();
+    }
+    return { ...session.user, jti: payload.jti };
   }
 }
