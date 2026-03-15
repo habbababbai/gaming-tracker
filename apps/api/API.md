@@ -62,7 +62,7 @@ Links a user to a game in their collection.
 
 Tokens are session-based: each login creates a session; protected requests require a valid JWT whose session exists. Logout removes the session(s), so the token becomes invalid.
 
-**POST /api/auth/register** – Body: `{ "email", "password", "firstName", "lastName", "nick", "dateOfBirth" }` (all required). Optional: `avatarUrl`. Password min 8 chars, uppercase, lowercase, number. `dateOfBirth`: ISO date string (e.g. `1990-01-15`). Returns `{ data: { user, accessToken } }`.
+**POST /api/auth/register** – Body: `{ "email", "password", "firstName", "lastName", "nick", "dateOfBirth" }` (all required). Password min 8 chars, uppercase, lowercase, number. `dateOfBirth`: ISO date string (e.g. `1990-01-15`). Avatar can be set later via PATCH `/api/users/me`. Returns `{ data: { user, accessToken } }`.
 
 **POST /api/auth/login** – Body: `{ "email": "...", "password": "..." }`  
 Returns `{ data: { user, accessToken } }`. Multiple logins (e.g. web + mobile) create multiple sessions; all stay valid until logout.

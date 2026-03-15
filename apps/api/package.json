@@ -9,6 +9,7 @@
   "scripts": {
     "build": "prisma generate && nest build",
     "dev": "nest start --watch",
+    "dev:debug": "nest start --watch --debug",
     "start": "nest start",
     "start:prod": "node dist/main",
     "start:debug": "nest start --debug",
