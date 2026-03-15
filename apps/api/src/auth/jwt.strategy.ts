@@ -10,6 +10,18 @@ export interface JwtPayload {
   exp?: number;
 }
 
+export interface SessionWithUser {
+  expiresAt: Date;
+  user: { id: string; email: string; createdAt: Date } | null;
+}
+
+interface SessionFindDelegate {
+  findUnique(args: {
+    where: { jti: string };
+    include: { user: { select: { id: true; email: true; createdAt: true } } };
+  }): Promise<SessionWithUser | null>;
+}
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private readonly prisma: PrismaService) {
@@ -24,16 +36,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload) {
-    const session = await this.prisma.session.findUnique({
+  async validate(payload: JwtPayload): Promise<{
+    id: string;
+    email: string;
+    createdAt: Date;
+    jti: string;
+  }> {
+    const sessionDb: SessionFindDelegate = this.prisma
+      .session as unknown as SessionFindDelegate;
+    const session = await sessionDb.findUnique({
       where: { jti: payload.jti },
       include: { user: { select: { id: true, email: true, createdAt: true } } },
     });
-    if (
-      !session ||
-      session.expiresAt < new Date() ||
-      !session.user
-    ) {
+    if (!session || session.expiresAt < new Date() || !session.user) {
       throw new UnauthorizedException();
     }
     return { ...session.user, jti: payload.jti };

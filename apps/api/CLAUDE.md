@@ -190,7 +190,8 @@ The monorepo uses `@repo/types` for **framework-agnostic** types shared across A
 
 ### TypeScript Best Practices
 
-- Always use explicit types, avoid `any`
+- **No `any`** – `noImplicitAny: true` in tsconfig; no explicit `any`; use `unknown` and narrow or proper types.
+- **Strict tsconfig** – `apps/api/tsconfig.json` uses `strict: true`, `strictNullChecks`, `strictBindCallApply`, `noFallthroughCasesInSwitch`. Do not relax these.
 - Use interfaces for complex object shapes (payloads, responses)
 - Use enums for fixed value sets (e.g., game statuses, rating scales)
 - Export types from service files, import in controllers/DTOs
@@ -241,6 +242,18 @@ bun run test        # unit tests
 bun run test:e2e    # e2e tests
 bun run test:cov    # unit tests with coverage
 ```
+
+### Finding and fixing all errors (lint + TypeScript)
+
+Run once to see every lint and type error in the API:
+
+```bash
+cd apps/api && bun run check
+```
+
+This runs `prisma generate`, then `lint` (with `--max-warnings 0`), then `type-check`. Fix reported files (lint first, then `tsc --noEmit`). Use `bun run lint:fix` for auto-fixable rules. Re-run `bun run check` until it passes.
+
+**Why did my IDE show errors but `bun run check` passed?** Type-aware ESLint rules (e.g. `no-unsafe-call`) use TypeScript’s type information. The IDE and the CLI must use the same TypeScript program. We use `parserOptions.project: ['./tsconfig.json']` and an explicit `include` in `tsconfig.json` so both use the same program. Always run `bun run check` from `apps/api` after pulling or changing schema; it runs `prisma generate` first so generated types exist. If the IDE still shows stale type-aware errors after `check` passes, restart the ESLint server (or reload the editor window).
 
 ---
 
@@ -506,7 +519,9 @@ app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 - `main.ts` - bootstrap code
 - `generated/**` - auto-generated Prisma client
 
-**Run coverage:** `bun run test:cov`
+**Run coverage:** `bun run test:cov`. Thresholds in `package.json` (global: 80% lines/statements/functions, 70% branches); CI runs `test:cov` and fails if below.
+
+**What’s included:** All `*.service.ts` under `src` (app, auth, igdb, users, user-games). **Excluded:** `src/generated/**`, `prisma/prisma.service.ts` (lifecycle only, no business logic). So every service that has business logic is measured.
 
 ---
 

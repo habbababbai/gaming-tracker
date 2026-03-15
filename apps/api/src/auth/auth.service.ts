@@ -12,6 +12,27 @@ import { RegisterDto } from './dto/register.dto.js';
 
 const SALT_ROUNDS = 12;
 
+interface SessionDelegate {
+  create(args: {
+    data: { jti: string; userId: string; expiresAt: Date };
+  }): Promise<unknown>;
+  deleteMany(args: {
+    where: { jti?: string; userId?: string };
+  }): Promise<unknown>;
+}
+
+function getExpFromDecoded(decoded: unknown): number {
+  if (
+    decoded === null ||
+    typeof decoded !== 'object' ||
+    !('exp' in decoded) ||
+    typeof (decoded as { exp: unknown }).exp !== 'number'
+  ) {
+    throw new Error('Invalid token payload');
+  }
+  return (decoded as { exp: number }).exp;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -30,9 +51,11 @@ export class AuthService {
   ): Promise<{ accessToken: string }> {
     const jti = randomUUID();
     const token = this.jwt.sign({ sub: userId, jti });
-    const payload = this.jwt.decode(token) as { exp: number };
-    const expiresAt = new Date(payload.exp * 1000);
-    await this.prisma.session.create({ data: { jti, userId, expiresAt } });
+    const exp = getExpFromDecoded(this.jwt.decode(token));
+    const expiresAt = new Date(exp * 1000);
+    const sessionDb: SessionDelegate = this.prisma
+      .session as unknown as SessionDelegate;
+    await sessionDb.create({ data: { jti, userId, expiresAt } });
     return { accessToken: token };
   }
 
@@ -86,7 +109,9 @@ export class AuthService {
    * @param jti - Token id from JWT payload
    */
   async logout(jti: string): Promise<void> {
-    await this.prisma.session.deleteMany({ where: { jti } });
+    const sessionDb: SessionDelegate = this.prisma
+      .session as unknown as SessionDelegate;
+    await sessionDb.deleteMany({ where: { jti } });
   }
 
   /**
@@ -94,6 +119,8 @@ export class AuthService {
    * @param userId - User id
    */
   async logoutAll(userId: string): Promise<void> {
-    await this.prisma.session.deleteMany({ where: { userId } });
+    const sessionDb: SessionDelegate = this.prisma
+      .session as unknown as SessionDelegate;
+    await sessionDb.deleteMany({ where: { userId } });
   }
 }

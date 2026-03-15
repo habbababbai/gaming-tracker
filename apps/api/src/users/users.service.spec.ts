@@ -12,6 +12,10 @@ describe('UsersService', () => {
     email: 'test@example.com',
     createdAt: new Date('2026-03-14'),
   };
+  const mockUserForDelete = {
+    ...mockUser,
+    passwordHash: 'hashed',
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -39,7 +43,11 @@ describe('UsersService', () => {
 
   describe('findById', () => {
     it('should return user without passwordHash', async () => {
-      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockUser);
+      jest
+        .spyOn(prisma.user, 'findUnique')
+        .mockResolvedValue(
+          mockUser as Awaited<ReturnType<PrismaService['user']['findUnique']>>,
+        );
 
       const result = await service.findById(mockUser.id);
 
@@ -62,7 +70,7 @@ describe('UsersService', () => {
 
   describe('remove', () => {
     it('should delete user', async () => {
-      jest.spyOn(prisma.user, 'delete').mockResolvedValue(mockUser);
+      jest.spyOn(prisma.user, 'delete').mockResolvedValue(mockUserForDelete);
 
       await service.remove(mockUser.id);
 
@@ -72,7 +80,7 @@ describe('UsersService', () => {
     });
 
     it('should complete deletion without returning data', async () => {
-      jest.spyOn(prisma.user, 'delete').mockResolvedValue(mockUser);
+      jest.spyOn(prisma.user, 'delete').mockResolvedValue(mockUserForDelete);
 
       const result = await service.remove(mockUser.id);
 
