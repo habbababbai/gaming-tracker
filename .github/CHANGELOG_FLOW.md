@@ -16,7 +16,9 @@
    - Reads commits in that range.
    - Keeps only lines matching **`[SCOPE] - Description`** (e.g. `[BE] - Add X`). Others (e.g. `[DOCS]`, or no scope) are ignored.
    - Maps scopes to apps: `BE` → `apps/api`, `WEB` → `apps/web`, `MOBILE` → `apps/mobile`, `TYPES` → `packages/types`.
-   - For each app that has at least one matching commit, **prepends** new entries under `## [Unreleased]` in that app’s `CHANGELOG.md` (single replace of the `## [Unreleased]` line with that line + new subsections). Only those apps are touched. **Deduplication:** existing bullet lines under `[Unreleased]` are read (normalized: trim + strip trailing `(#n)`); any new entry that already exists is skipped, so the same line is never added twice.
+   - For each app that has at least one matching commit, **prepends** new entries under `## [Unreleased]` in that app’s `CHANGELOG.md` (single replace of the `## [Unreleased]` line with that line + new subsections). Only those apps are touched.
+   - **PR link:** When run from the workflow, the script is called with `--pr-number <n>`. Each new bullet is appended with a markdown link to that PR, e.g. `- Add X ([#42](https://github.com/owner/repo/pull/42))`. So the “changes” section links to the specific PR that introduced them. (Requires `GITHUB_REPOSITORY` in the environment, which GitHub Actions sets automatically.)
+   - **Deduplication:** existing bullet lines under `[Unreleased]` are read (normalized: trim + strip trailing `(#n)` or `([#n](url))`); any new entry that already exists is skipped, so the same line is never added twice.
 
 5. **Create PR:** If `git diff` is non-empty after the script, the workflow uses `peter-evans/create-pull-request` to commit changes and push to branch **`changelog-update`**. If a PR from that branch already exists, the action **updates** it (same PR, updated content). No duplicate PRs for the same branch.
 

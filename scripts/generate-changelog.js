@@ -30,6 +30,7 @@ const args = process.argv.slice(2);
 const jsonOutput = args.includes("--json");
 const sinceCommitIdx = args.indexOf("--since-commit");
 const sinceTagIdx = args.indexOf("--since-tag");
+const prNumberIdx = args.indexOf("--pr-number");
 
 let sinceRef = null;
 if (sinceCommitIdx !== -1) {
@@ -38,6 +39,12 @@ if (sinceCommitIdx !== -1) {
 if (sinceTagIdx !== -1) {
     sinceRef = args[sinceTagIdx + 1];
 }
+
+let prNumber = process.env.PR_NUMBER || null;
+if (prNumberIdx !== -1 && args[prNumberIdx + 1]) {
+    prNumber = args[prNumberIdx + 1];
+}
+const repo = process.env.GITHUB_REPOSITORY || null;
 
 /**
  * Get commits since a reference (tag/commit) or all commits if no reference
@@ -177,12 +184,19 @@ function readChangelog(appPath) {
     }
 }
 
-/** Normalize a bullet line for dedupe: trim and strip trailing " (#n)". */
+/** Normalize a bullet line for dedupe: trim and strip trailing " (#n)" or " ([#n](url))". */
 function normalizeEntry(text) {
     return text
         .trim()
         .replace(/\s*\(#\d+\)\s*$/, "")
+        .replace(/\s*\(\s*\[#\d+\]\([^)]+\)\s*\)\s*$/, "")
         .trim();
+}
+
+function formatEntry(description, prNum, repoSlug) {
+    if (!prNum || !repoSlug) return description;
+    const url = `https://github.com/${repoSlug}/pull/${prNum}`;
+    return `${description} ([#${prNum}](${url}))`;
 }
 
 /** Extract existing bullet texts from [Unreleased] section (normalized). */
@@ -203,8 +217,9 @@ function getExistingUnreleasedEntries(content) {
 
 /**
  * Update changelog with new entries. Skips entries already present under [Unreleased].
+ * When prNumber and repo are set (e.g. in CI), each bullet gets a link to the PR.
  */
-function updateChangelog(appPath, entries) {
+function updateChangelog(appPath, entries, prNum, repoSlug) {
     const content = readChangelog(appPath);
     if (!content) {
         console.error(`  ❌ CHANGELOG not found at ${appPath}`);
@@ -231,23 +246,24 @@ function updateChangelog(appPath, entries) {
         return false;
     }
 
+    const fmt = (e) => formatEntry(e, prNum, repoSlug);
     let newEntries = "";
     if (added.length > 0) {
         newEntries += "\n### Added\n";
         added.forEach((entry) => {
-            newEntries += `- ${entry}\n`;
+            newEntries += `- ${fmt(entry)}\n`;
         });
     }
     if (fixed.length > 0) {
         newEntries += "\n### Fixed\n";
         fixed.forEach((entry) => {
-            newEntries += `- ${entry}\n`;
+            newEntries += `- ${fmt(entry)}\n`;
         });
     }
     if (changed.length > 0) {
         newEntries += "\n### Changed\n";
         changed.forEach((entry) => {
-            newEntries += `- ${entry}\n`;
+            newEntries += `- ${fmt(entry)}\n`;
         });
     }
 
@@ -309,7 +325,7 @@ function main() {
             changes.Fixed.length +
             changes.Changed.length;
 
-        if (updateChangelog(changelogPath, changes)) {
+        if (updateChangelog(changelogPath, changes, prNumber, repo)) {
             console.log(
                 `✅ Updated ${app}/CHANGELOG.md (${totalEntries} entries)`,
             );
