@@ -2,7 +2,7 @@
 
 NestJS backend for Gaming Tracker. Provides endpoints for web and mobile apps.
 
-**Status:** 70% Complete | **Last Updated:** 2026-03-14
+**Status:** 70% Complete | **Last Updated:** 2026-03-15
 
 ---
 
@@ -11,6 +11,9 @@ NestJS backend for Gaming Tracker. Provides endpoints for web and mobile apps.
 ### Authentication & Security
 - ✅ User registration with email & password
 - ✅ User login with JWT token generation
+- ✅ Session-backed tokens (Session model; each login creates a session, validated on each request)
+- ✅ Logout: revoke current session (`POST /api/auth/logout`)
+- ✅ Logout all devices: revoke all sessions for user (`POST /api/auth/logout?all=true`)
 - ✅ JWT strategy & guards (Passport.js)
 - ✅ Rate limiting on auth endpoints (5 req / 15 min)
 - ✅ Password hashing (bcrypt, SALT_ROUNDS=12)
@@ -20,8 +23,7 @@ NestJS backend for Gaming Tracker. Provides endpoints for web and mobile apps.
 
 ### User Management
 - ✅ Get user profile (`GET /api/users/me`)
-- ✅ Delete user account (`DELETE /api/users/me`)
-- ✅ Cascading delete (removes user's games when deleted)
+- ✅ Delete user account (`DELETE /api/users/me`; requires valid JWT; cascades to sessions and user-games)
 
 ### Game Management
 - ✅ Search IGDB for games (`GET /api/games/search?q=...`)
@@ -135,6 +137,7 @@ NestJS backend for Gaming Tracker. Provides endpoints for web and mobile apps.
 
 ### Current Models
 - **User** - id, email, passwordHash, createdAt
+- **Session** - jti (PK), userId, expiresAt (tokens; revoked on logout)
 - **Game** - id, name, igdbId, coverUrl, releaseYear, createdAt
 - **UserGame** - id, userId, gameId, status, createdAt, updatedAt
 

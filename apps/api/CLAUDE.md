@@ -75,7 +75,7 @@ The monorepo uses `@repo/types` for **framework-agnostic** types shared across A
 1. **JWT Configuration**
    - Secret stored in `JWT_SECRET` environment variable
    - Tokens extracted from `Authorization: Bearer <token>` header
-   - Validation includes user existence check (jwt.strategy.ts)
+   - **Session-backed tokens:** Each login creates a `Session` row (jti, userId, expiresAt). JWT payload includes `jti`. Strategy validates token and checks session exists and is not expired. Logout removes session(s); token then returns 401.
    - Default `JwtAuthGuard` applied globally to all routes
    - Use `@Public()` decorator to exclude routes from auth (register, login)
 
@@ -220,16 +220,16 @@ Standardize API responses:
 
 - Code should be self-documenting - avoid obvious comments
 - Document WHY, not WHAT (code shows what, comments explain why)
-- Use JSDoc for public methods in services:
+- **JSDoc** for public service methods: AuthService, UsersService, IgdbService, UserGamesService. Use `@param`, `@returns`, `@throws` when non-obvious. Example:
   ```typescript
   /**
-   * Find a user by email and validate password.
-   * @param email - User email
-   * @param password - Plain-text password
-   * @returns User with tokens or throws UnauthorizedException
+   * Authenticates by email/password and returns user + access token.
+   * Creates a new session (multiple logins allowed).
+   * @throws UnauthorizedException if credentials invalid
    */
   async login(dto: LoginDto) { ... }
   ```
+- Skip JSDoc on trivial glue (simple controllers, obvious CRUD). Add for complex logic or non-obvious params/errors.
 - No commented-out code in commits - delete it
 
 ## Testing Strategy
@@ -565,6 +565,13 @@ Before submitting test changes:
 - Cascade rules: think carefully about deletes (use ON DELETE CASCADE for relationships)
 
 ## API Endpoints
+
+### Auth Endpoints
+
+- **POST /api/auth/register** – Body: email, password. Creates user and session; returns `{ data: { user, accessToken } }`. Public.
+- **POST /api/auth/login** – Body: email, password. Creates session; returns `{ data: { user, accessToken } }`. Public.
+- **POST /api/auth/logout** – Revokes current session (token invalid after). Protected. Returns 204.
+- **POST /api/auth/logout?all=true** – Revokes all sessions for the user. Protected. Returns 204.
 
 ### User Games Endpoints
 

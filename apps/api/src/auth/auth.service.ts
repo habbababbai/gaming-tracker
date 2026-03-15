@@ -19,7 +19,15 @@ export class AuthService {
     private readonly jwt: JwtService,
   ) {}
 
-  private async createSession(userId: string): Promise<{ accessToken: string }> {
+  /**
+   * Creates a session for the user and returns a signed JWT.
+   * Session is stored so it can be validated on each request and revoked on logout.
+   * @param userId - User id (sub in JWT)
+   * @returns Access token for Authorization header
+   */
+  private async createSession(
+    userId: string,
+  ): Promise<{ accessToken: string }> {
     const jti = randomUUID();
     const token = this.jwt.sign({ sub: userId, jti });
     const payload = this.jwt.decode(token) as { exp: number };
@@ -28,6 +36,10 @@ export class AuthService {
     return { accessToken: token };
   }
 
+  /**
+   * Registers a new user and returns user + access token.
+   * @throws ConflictException if email already registered
+   */
   async register(dto: RegisterDto) {
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -44,6 +56,11 @@ export class AuthService {
     return { data: { user, accessToken } };
   }
 
+  /**
+   * Authenticates by email/password and returns user + access token.
+   * Creates a new session (multiple logins allowed, e.g. web + mobile).
+   * @throws UnauthorizedException if credentials invalid
+   */
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -64,10 +81,18 @@ export class AuthService {
     };
   }
 
+  /**
+   * Revokes the session for the given token id. Token becomes invalid (401 on next use).
+   * @param jti - Token id from JWT payload
+   */
   async logout(jti: string): Promise<void> {
     await this.prisma.session.deleteMany({ where: { jti } });
   }
 
+  /**
+   * Revokes all sessions for the user (all devices). All their tokens become invalid.
+   * @param userId - User id
+   */
   async logoutAll(userId: string): Promise<void> {
     await this.prisma.session.deleteMany({ where: { userId } });
   }
