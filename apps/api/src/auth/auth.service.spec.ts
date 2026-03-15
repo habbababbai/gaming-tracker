@@ -25,9 +25,16 @@ describe('AuthService', () => {
     id: 'user-123',
     email: 'test@example.com',
     passwordHash: 'hashed-password',
+    firstName: 'Test',
+    lastName: 'User',
+    nick: 'test',
+    dateOfBirth: new Date('1990-01-01'),
+    avatarUrl: null as string | null,
+    locale: 'en',
     createdAt: new Date('2026-03-14'),
     updatedAt: new Date('2026-03-14'),
   };
+  const mockUserProfile = (({ passwordHash: _, ...p }) => p)(mockUser);
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -71,28 +78,33 @@ describe('AuthService', () => {
     const registerDto: RegisterDto = {
       email: 'newuser@example.com',
       password: 'Password123',
+      firstName: 'New',
+      lastName: 'User',
+      nick: 'newuser',
+      dateOfBirth: '1995-06-15',
     };
 
     it('should hash password, create user and session on success', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(null);
-      (prisma.user.create as jest.Mock).mockResolvedValueOnce({
+      const createdUser = {
         id: 'user-456',
         email: registerDto.email,
+        firstName: registerDto.firstName,
+        lastName: registerDto.lastName,
+        nick: registerDto.nick,
+        dateOfBirth: new Date(registerDto.dateOfBirth),
+        avatarUrl: null,
+        locale: 'en',
         createdAt: mockUser.createdAt,
-      });
+        updatedAt: mockUser.updatedAt,
+      };
+      (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(null);
+      (prisma.user.create as jest.Mock).mockResolvedValueOnce(createdUser);
       (jwtService.sign as jest.Mock).mockReturnValue('new-token');
 
       const result = await service.register(registerDto);
 
       expect(result).toEqual({
-        data: {
-          user: {
-            id: 'user-456',
-            email: registerDto.email,
-            createdAt: mockUser.createdAt,
-          },
-          accessToken: 'new-token',
-        },
+        data: { user: createdUser, accessToken: 'new-token' },
       });
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { email: registerDto.email },
@@ -122,16 +134,66 @@ describe('AuthService', () => {
     });
 
     it('should not return passwordHash in response', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(null);
-      (prisma.user.create as jest.Mock).mockResolvedValueOnce({
+      const createdUser = {
         id: 'user-456',
         email: registerDto.email,
+        firstName: registerDto.firstName,
+        lastName: registerDto.lastName,
+        nick: registerDto.nick,
+        dateOfBirth: new Date(registerDto.dateOfBirth),
+        avatarUrl: null,
+        locale: 'en',
         createdAt: mockUser.createdAt,
-      });
+        updatedAt: mockUser.updatedAt,
+      };
+      (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(null);
+      (prisma.user.create as jest.Mock).mockResolvedValueOnce(createdUser);
 
       const result = await service.register(registerDto);
 
       expect(result.data.user).not.toHaveProperty('passwordHash');
+    });
+
+    it('should pass required profile fields to create', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(null);
+      (prisma.user.create as jest.Mock).mockImplementation(
+        (args: { data: unknown }) => {
+          const data = args.data as Record<string, unknown>;
+          return Promise.resolve({
+            id: 'user-789',
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            nick: data.nick,
+            dateOfBirth: data.dateOfBirth,
+            avatarUrl: null,
+            locale: 'en',
+            createdAt: mockUser.createdAt,
+            updatedAt: mockUser.updatedAt,
+          });
+        },
+      );
+
+      await service.register({
+        email: 'full@example.com',
+        password: 'Password123',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        nick: 'jane',
+        dateOfBirth: '1990-05-15',
+      });
+
+      expect(prisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            email: 'full@example.com',
+            firstName: 'Jane',
+            lastName: 'Doe',
+            nick: 'jane',
+            dateOfBirth: new Date('1990-05-15'),
+          }),
+        }),
+      );
     });
   });
 
@@ -141,7 +203,7 @@ describe('AuthService', () => {
       password: 'Password123',
     };
 
-    it('should return user and JWT token and create session on valid credentials', async () => {
+    it('should return user profile and JWT token and create session on valid credentials', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(mockUser);
       mockBcryptCompare.mockResolvedValueOnce(true);
       (jwtService.sign as jest.Mock).mockReturnValue('auth-token');
@@ -149,14 +211,7 @@ describe('AuthService', () => {
       const result = await service.login(loginDto);
 
       expect(result).toEqual({
-        data: {
-          user: {
-            id: mockUser.id,
-            email: mockUser.email,
-            createdAt: mockUser.createdAt,
-          },
-          accessToken: 'auth-token',
-        },
+        data: { user: mockUserProfile, accessToken: 'auth-token' },
       });
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { email: loginDto.email },
@@ -197,6 +252,7 @@ describe('AuthService', () => {
       const result = await service.login(loginDto);
 
       expect(result.data.user).not.toHaveProperty('passwordHash');
+      expect(result.data.user).toEqual(mockUserProfile);
     });
   });
 

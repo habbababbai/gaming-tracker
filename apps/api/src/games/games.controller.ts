@@ -5,9 +5,11 @@ import {
   ParseIntPipe,
   Query,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { Public } from '../auth/public.decorator.js';
 import { IgdbService } from '../igdb/igdb.service.js';
 
+@ApiTags('games')
 @Controller('games')
 export class GamesController {
   constructor(private readonly igdb: IgdbService) {}

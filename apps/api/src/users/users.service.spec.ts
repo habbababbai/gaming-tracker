@@ -10,7 +10,14 @@ describe('UsersService', () => {
   const mockUser = {
     id: 'user-123',
     email: 'test@example.com',
+    firstName: 'Test',
+    lastName: 'User',
+    nick: 'test',
+    dateOfBirth: new Date('1990-01-01'),
+    avatarUrl: null,
+    locale: 'en',
     createdAt: new Date('2026-03-14'),
+    updatedAt: new Date('2026-03-14'),
   };
   const mockUserForDelete = {
     ...mockUser,
@@ -26,6 +33,7 @@ describe('UsersService', () => {
           useValue: {
             user: {
               findUnique: jest.fn(),
+              update: jest.fn(),
               delete: jest.fn(),
             },
           },
@@ -42,7 +50,7 @@ describe('UsersService', () => {
   });
 
   describe('findById', () => {
-    it('should return user without passwordHash', async () => {
+    it('should return user profile without passwordHash', async () => {
       jest
         .spyOn(prisma.user, 'findUnique')
         .mockResolvedValue(
@@ -55,7 +63,18 @@ describe('UsersService', () => {
       expect(result).not.toHaveProperty('passwordHash');
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: mockUser.id },
-        select: { id: true, email: true, createdAt: true },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          nick: true,
+          dateOfBirth: true,
+          avatarUrl: true,
+          locale: true,
+          createdAt: true,
+          updatedAt: true,
+        },
       });
     });
 
@@ -65,6 +84,47 @@ describe('UsersService', () => {
       await expect(service.findById('non-existent')).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  describe('updateProfile', () => {
+    it('should update only provided fields and return profile', async () => {
+      const updated = {
+        ...mockUser,
+        firstName: 'Jane',
+        nick: 'jane',
+        updatedAt: new Date('2026-03-15'),
+      };
+      jest.spyOn(prisma.user, 'update').mockResolvedValue(updated as never);
+      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(updated as never);
+
+      const result = await service.updateProfile('user-123', {
+        firstName: 'Jane',
+        nick: 'jane',
+      });
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-123' },
+        data: {
+          firstName: 'Jane',
+          nick: 'jane',
+        },
+      });
+      expect(result).toEqual(updated);
+    });
+
+    it('should not clear required fields when given empty string', async () => {
+      jest.spyOn(prisma.user, 'update').mockResolvedValue(mockUser as never);
+      jest
+        .spyOn(prisma.user, 'findUnique')
+        .mockResolvedValue(mockUser as never);
+
+      await service.updateProfile('user-123', { nick: '' });
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-123' },
+        data: {},
+      });
     });
   });
 

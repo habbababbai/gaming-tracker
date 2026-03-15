@@ -82,15 +82,35 @@ describe('UserGames (e2e)', () => {
     await prisma.session.deleteMany();
     await prisma.user.deleteMany();
 
+    const registerPayload = (
+      overrides: {
+        email?: string;
+        password?: string;
+      } = {},
+    ) => ({
+      email: 'user@example.com',
+      password: 'Password123',
+      firstName: 'Test',
+      lastName: 'User',
+      nick: 'test',
+      dateOfBirth: '1990-01-01',
+      ...overrides,
+    });
+
     const res1 = await request(app.getHttpServer())
       .post('/auth/register')
-      .send({ email: 'user1@example.com', password: 'Password123' });
+      .send(registerPayload({ email: 'user1@example.com' }));
     authToken1 = res1.body.data.accessToken;
     userId1 = res1.body.data.user.id;
 
     const res2 = await request(app.getHttpServer())
       .post('/auth/register')
-      .send({ email: 'user2@example.com', password: 'Password456' });
+      .send(
+        registerPayload({
+          email: 'user2@example.com',
+          password: 'Password456',
+        }),
+      );
     authToken2 = res2.body.data.accessToken;
   });
 
