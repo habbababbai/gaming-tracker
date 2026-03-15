@@ -32,6 +32,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ### Changed
+- Logout logic and endpoint (#16)
+- Setup unit tests for API (#9)
+- Setup Postgres, Nest.js and Endpoints (#1)
+- READMEs, examples, AGENTS file
+- Repo setup
+
+
+### Changed
 - Setup unit tests for API (#9)
 - Setup Postgres, Nest.js and Endpoints (#1)
 - READMEs, examples, AGENTS file
