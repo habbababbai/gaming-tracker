@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Move types to shared from API, refactor helpers (#26) ([#26](https://github.com/habbababbai/gaming-tracker/pull/26))
+
+
 ### Fixed
 - Fix enums for Node.js (#10)
 
