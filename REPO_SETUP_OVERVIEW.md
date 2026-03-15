@@ -26,9 +26,9 @@ gaming-tracker/
 │   │
 │   ├── 📁 pull_request_template.md ..... PR template (auto-populated)
 │   ├── 📁 SETUP_GUIDE.md ............... GitHub Actions setup
-│   ├── 📁 PR_VALIDATION_QUICK_START.md . Quick reference
 │   ├── 📁 CODE_QUALITY_SETUP.md ........ Technical setup guide
-│   └── 📁 README.md .................... GitHub config overview
+│   ├── 📁 CHANGELOG_FLOW.md ............ Changelog automation
+│   └── 📁 README-GH_CONFIG.md .......... GitHub config overview
 │
 ├── .husky/
 │   ├── pre-commit ...................... Format, lint, type check
@@ -70,7 +70,7 @@ gaming-tracker/
 
 | File | What It Does | Runs When |
 |------|-------------|-----------|
-| **.github/workflows/ci.yml** | Checks lint, format, types, tests, security, build | Every push & PR |
+| **.github/workflows/ci.yml** | Checks lint, format, types, tests, security, build | Pull requests (skips .md-only) |
 | **.github/workflows/validate-pr-title.yml** | Validates PR title format | Every PR creation/edit |
 
 ### 🪝 Pre-commit Hooks (Local)
@@ -94,8 +94,8 @@ gaming-tracker/
 |------|---------|
 | **.github/SETUP_GUIDE.md** | GitHub configuration instructions |
 | **.github/CODE_QUALITY_SETUP.md** | Technical deep-dive on all 3 layers |
-| **.github/PR_VALIDATION_QUICK_START.md** | Quick reference for PR validation |
-| **.github/README.md** | Overview of GitHub config |
+| **.github/CHANGELOG_FLOW.md** | Changelog automation flow and pitfalls |
+| **.github/README-GH_CONFIG.md** | Overview of GitHub config and quick start |
 | **.husky/README.md** | Husky setup & troubleshooting |
 
 ### 🚀 App-Specific Documentation
@@ -126,7 +126,7 @@ Developer Workflow:
    └─ Learns naming conventions
     ↓
 4. Create feature branch
-   └─ Follows naming: [scope]/feature-name
+   └─ Follows naming: scope/short-description (e.g. be/password-reset)
     ↓
 5. Write code
     ↓

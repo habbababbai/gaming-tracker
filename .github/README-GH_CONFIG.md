@@ -22,16 +22,9 @@ This directory contains GitHub-specific configuration files for the Gaming Track
 - **`ISSUE_TEMPLATE/bug_report.md`** - Auto-populated for bug reports
 
 ### Guides
-- **`SETUP_GUIDE.md`** - Detailed GitHub configuration instructions
-  - What works automatically
-  - Optional repository settings
-  - Step-by-step setup
-  - Troubleshooting
-
-- **`PR_VALIDATION_QUICK_START.md`** - Quick reference guide
-  - TL;DR version
-  - Testing instructions
-  - FAQ
+- **`SETUP_GUIDE.md`** - Detailed GitHub configuration instructions (what works automatically, optional settings, troubleshooting)
+- **`CODE_QUALITY_SETUP.md`** - Local (Husky) + CI + branch protection
+- **`CHANGELOG_FLOW.md`** - How changelog automation works and pitfalls
 
 ---
 
@@ -81,15 +74,23 @@ If you want to prevent merging without proper titles:
 
 **Minimum:** Just push the files. Validation works automatically.
 
-**Recommended:** Setup branch protection to enforce it.
-
-See `SETUP_GUIDE.md` for detailed instructions.
+**Recommended:** Set up branch protection to enforce it (see `SETUP_GUIDE.md`).
 
 ---
 
-## 📚 Full Documentation
+## FAQ
 
-- Main guidelines: `../../CONTRIBUTING.md`
-- Setup instructions: `SETUP_GUIDE.md`
-- Quick reference: `PR_VALIDATION_QUICK_START.md`
+- **Does it work without setup?** Yes. The workflow runs automatically once pushed.
+- **Do I need to change GitHub settings?** No; branch protection is optional but recommended.
+- **What if I mess up the title?** Edit it; the workflow re-runs.
+- **Will it block merging?** Only if you set branch protection to require the status check.
+
+---
+
+## 📚 More
+
+- Contributing: `../../CONTRIBUTING.md`
+- Detailed setup: `SETUP_GUIDE.md`
+- Code quality (Husky, CI): `CODE_QUALITY_SETUP.md`
+- Changelog automation: `CHANGELOG_FLOW.md`
 

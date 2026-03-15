@@ -119,8 +119,7 @@ git commit -m "[BE] - Add feature"
 
 ### When It Runs
 
-- ✅ On every push to `main` or `develop`
-- ✅ On every pull request to `main` or `develop`
+- ✅ On pull requests to `main` or `develop` (skips when only .md/docs change)
 - ✅ All jobs run in parallel for speed
 
 ### Example: Failed Lint in PR

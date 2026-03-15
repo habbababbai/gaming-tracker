@@ -137,24 +137,23 @@ Brief description of changes.
 
 ## Branch Naming Convention
 
-Use descriptive branch names matching the scope:
+**Format:** `scope/short-description` — lowercase scope (matches PR scope), kebab-case description.
 
-```
-[scope]/feature-name
-[scope]/fix-issue-name
-[scope]/docs-update
-```
+- **Scope:** Same as PR/commit (`be`, `web`, `mobile`, `types`, `docs`, `config`). One scope per branch.
+- **Description:** Short, hyphenated; reflects the work (e.g. `add-password-reset`, `fix-login-validation`).
+- **Reserved:** Don’t use `main`, `develop`, or `changelog-update` (bot branch).
 
-### Examples
+**Examples:**
 
-```
-[be]/password-reset
-[web]/game-list-page
-[mobile]/search-screen
-[types]/user-response-types
-[docs]/api-authentication
-[config]/github-actions
-```
+| Branch | PR title (when you open it) |
+|--------|-----------------------------|
+| `be/password-reset` | `[BE] - Add password reset endpoint` |
+| `web/game-list-page` | `[WEB] - Create game list page` |
+| `mobile/search-screen` | `[MOBILE] - Implement search screen` |
+| `types/user-game-response` | `[TYPES] - Add UserGameResponse interface` |
+| `docs/api-auth` | `[DOCS] - Update API authentication guide` |
+| `config/github-actions` | `[CONFIG] - Setup GitHub Actions` |
+| `be/fix-session-expiry` | `[BE] - Fix session expiry handling` |
 
 ---
 
@@ -168,7 +167,7 @@ Use descriptive branch names matching the scope:
 
 2. **Create a branch** from `main`
    ```bash
-   git checkout -b [scope]/feature-name
+   git checkout -b be/password-reset
    ```
 
 ### While Developing
@@ -184,7 +183,7 @@ Use descriptive branch names matching the scope:
 
 3. **Push to remote**
    ```bash
-   git push -u origin [scope]/feature-name
+   git push -u origin be/password-reset
    ```
 
 ### Creating a Pull Request
