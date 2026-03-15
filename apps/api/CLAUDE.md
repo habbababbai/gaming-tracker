@@ -595,7 +595,7 @@ Before submitting test changes:
 
 ### Auth Endpoints
 
-- **POST /api/auth/register** – Body: email, password. Creates user and session; returns `{ data: { user, accessToken } }`. Public.
+- **POST /api/auth/register** – Body: email, password, firstName, lastName, nick, dateOfBirth (all required). Avatar set later via PATCH /users/me. Creates user and session; returns `{ data: { user, accessToken } }`. Public.
 - **POST /api/auth/login** – Body: email, password. Creates session; returns `{ data: { user, accessToken } }`. Public.
 - **POST /api/auth/logout** – Revokes current session (token invalid after). Protected. Returns 204.
 - **POST /api/auth/logout?all=true** – Revokes all sessions for the user. Protected. Returns 204.

@@ -7,6 +7,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { AuthUser, type AuthUserPayload } from './user.decorator.js';
 import { Public } from './public.decorator.js';
@@ -20,6 +21,7 @@ interface LogoutService {
   logoutAll(userId: string): Promise<void>;
 }
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}

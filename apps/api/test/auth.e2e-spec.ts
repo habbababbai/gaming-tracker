@@ -13,7 +13,15 @@ describe('Auth (e2e)', () => {
   const testUser = {
     email: 'test@example.com',
     password: 'Password123',
+    firstName: 'Test',
+    lastName: 'User',
+    nick: 'test',
+    dateOfBirth: '1990-01-01',
   };
+  const registerPayload = (overrides: Partial<typeof testUser> = {}) => ({
+    ...testUser,
+    ...overrides,
+  });
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -61,47 +69,67 @@ describe('Auth (e2e)', () => {
     it('should return 409 Conflict for duplicate email', async () => {
       await request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'duplicate@example.com', password: 'Password123' })
+        .send(registerPayload({ email: 'duplicate@example.com' }))
         .expect(201);
 
       return request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'duplicate@example.com', password: 'Password456' })
+        .send(
+          registerPayload({
+            email: 'duplicate@example.com',
+            password: 'Password456',
+          }),
+        )
         .expect(409);
     });
 
     it('should return 400 Bad Request for invalid password format', () => {
       return request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'weak@example.com', password: 'weak' })
+        .send(registerPayload({ email: 'weak@example.com', password: 'weak' }))
         .expect(400);
     });
 
     it('should return 400 Bad Request for missing uppercase in password', () => {
       return request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'noupper@example.com', password: 'password123' })
+        .send(
+          registerPayload({
+            email: 'noupper@example.com',
+            password: 'password123',
+          }),
+        )
         .expect(400);
     });
 
     it('should return 400 Bad Request for missing lowercase in password', () => {
       return request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'nolower@example.com', password: 'PASSWORD123' })
+        .send(
+          registerPayload({
+            email: 'nolower@example.com',
+            password: 'PASSWORD123',
+          }),
+        )
         .expect(400);
     });
 
     it('should return 400 Bad Request for missing number in password', () => {
       return request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'nonumber@example.com', password: 'PasswordTest' })
+        .send(
+          registerPayload({
+            email: 'nonumber@example.com',
+            password: 'PasswordTest',
+          }),
+        )
         .expect(400);
     });
 
     it('should return 400 Bad Request for invalid email format', () => {
       return request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'invalid-email', password: 'Password123' })
+        .send(registerPayload({ email: 'invalid-email' }))
         .expect(400);
     });
   });
@@ -110,7 +138,7 @@ describe('Auth (e2e)', () => {
     beforeAll(async () => {
       await request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'login@example.com', password: 'Password123' });
+        .send(registerPayload({ email: 'login@example.com' }));
     });
 
     it('should login with valid credentials and return token', () => {
@@ -129,14 +157,20 @@ describe('Auth (e2e)', () => {
     it('should return 401 Unauthorized for invalid email', () => {
       return request(app.getHttpServer())
         .post('/auth/login')
-        .send({ email: 'nonexistent@example.com', password: 'Password123' })
+        .send({
+          email: 'nonexistent@example.com',
+          password: 'Password123',
+        })
         .expect(401);
     });
 
     it('should return 401 Unauthorized for wrong password', () => {
       return request(app.getHttpServer())
         .post('/auth/login')
-        .send({ email: 'login@example.com', password: 'WrongPassword123' })
+        .send({
+          email: 'login@example.com',
+          password: 'WrongPassword123',
+        })
         .expect(401);
     });
   });
@@ -148,7 +182,7 @@ describe('Auth (e2e)', () => {
     beforeAll(async () => {
       const res = await request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'protected@example.com', password: 'Password123' });
+        .send(registerPayload({ email: 'protected@example.com' }));
       authToken = res.body.data.accessToken;
       userId = res.body.data.user.id;
     });
@@ -174,13 +208,31 @@ describe('Auth (e2e)', () => {
         .set('Authorization', 'Bearer invalid-token')
         .expect(401);
     });
+
+    it('should update profile with PATCH /users/me and return updated data', async () => {
+      const res = await request(app.getHttpServer())
+        .patch('/users/me')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ firstName: 'Jane', nick: 'jane' })
+        .expect(200);
+      expect(res.body.data.firstName).toBe('Jane');
+      expect(res.body.data.nick).toBe('jane');
+      expect(res.body.data.email).toBe('protected@example.com');
+
+      const getRes = await request(app.getHttpServer())
+        .get('/users/me')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+      expect(getRes.body.data.firstName).toBe('Jane');
+      expect(getRes.body.data.nick).toBe('jane');
+    });
   });
 
   describe('POST /auth/logout', () => {
     it('should return 204 and invalidate current token', async () => {
       const registerRes = await request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'logout-one@example.com', password: 'Password123' });
+        .send(registerPayload({ email: 'logout-one@example.com' }));
       const token = registerRes.body.data.accessToken;
       if (!token) throw new Error('Setup failed: no token');
 
@@ -204,11 +256,14 @@ describe('Auth (e2e)', () => {
     it('should invalidate all sessions for user', async () => {
       const registerRes = await request(app.getHttpServer())
         .post('/auth/register')
-        .send({ email: 'logout-all@example.com', password: 'Password123' });
+        .send(registerPayload({ email: 'logout-all@example.com' }));
       const token1 = registerRes.body.data.accessToken;
       const loginRes = await request(app.getHttpServer())
         .post('/auth/login')
-        .send({ email: 'logout-all@example.com', password: 'Password123' });
+        .send({
+          email: 'logout-all@example.com',
+          password: 'Password123',
+        });
       const token2 = loginRes.body.data.accessToken;
       if (!token1 || !token2) throw new Error('Setup failed: no tokens');
 

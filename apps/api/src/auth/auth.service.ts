@@ -72,8 +72,26 @@ export class AuthService {
     }
     const passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
     const user = await this.prisma.user.create({
-      data: { email: dto.email, passwordHash },
-      select: { id: true, email: true, createdAt: true },
+      data: {
+        email: dto.email,
+        passwordHash,
+        firstName: dto.firstName.trim(),
+        lastName: dto.lastName.trim(),
+        nick: dto.nick.trim(),
+        dateOfBirth: new Date(dto.dateOfBirth),
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        nick: true,
+        dateOfBirth: true,
+        avatarUrl: true,
+        locale: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
     const { accessToken } = await this.createSession(user.id);
     return { data: { user, accessToken } };
@@ -96,12 +114,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
     const { accessToken } = await this.createSession(user.id);
-    return {
-      data: {
-        user: { id: user.id, email: user.email, createdAt: user.createdAt },
-        accessToken,
-      },
-    };
+    const { passwordHash: _, ...profile } = user;
+    return { data: { user: profile, accessToken } };
   }
 
   /**

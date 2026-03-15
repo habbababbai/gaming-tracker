@@ -12,12 +12,15 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { GameStatus } from '@repo/types';
 import { AuthUser, type AuthUserPayload } from '../auth/user.decorator.js';
 import { UserGamesService } from './user-games.service.js';
 import { CreateUserGameDto } from './dto/create-user-game.dto.js';
 import { UpdateUserGameDto } from './dto/update-user-game.dto.js';
 
+@ApiTags('user-games')
+@ApiBearerAuth()
 @Controller('user-games')
 export class UserGamesController {
   constructor(private readonly userGames: UserGamesService) {}
