@@ -1,5 +1,6 @@
 name: CI - Code Quality Checks
 
+# Runs only when code/config change. Changelog/docs-only (e.g. CHANGELOG.md) do not match paths, so CI is skipped.
 on:
     push:
         branches: [main, develop]

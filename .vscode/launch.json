@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "API: Attach",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "restart": true,
+      "cwd": "${workspaceFolder}/apps/api",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "API: Jest current file",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "test", "--", "--runInBand", "--no-cache", "${fileBasename}"],
+      "cwd": "${workspaceFolder}/apps/api",
+      "console": "integratedTerminal"
+    }
+  ]
+}

@@ -13,7 +13,10 @@
         "build": "turbo build",
         "lint": "turbo lint",
         "lint:fix": "turbo lint:fix",
+        "type-check": "turbo type-check",
+        "check": "turbo check",
         "test": "bun run --cwd apps/api test",
+        "test:cov": "bun run --cwd apps/api test:cov",
         "changelog:generate": "node scripts/generate-changelog.js",
         "changelog:test": "node scripts/generate-changelog.js --json"
     },

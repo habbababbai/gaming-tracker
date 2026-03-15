@@ -243,6 +243,18 @@ bun run test:e2e    # e2e tests
 bun run test:cov    # unit tests with coverage
 ```
 
+### Profiling (Clinic.js)
+
+From `apps/api`, after `bun run build` and with env (e.g. `.env`) set:
+
+```bash
+bun run profile:doctor    # event loop / I/O
+bun run profile:flame     # CPU flame graph
+bun run profile:bubbleprof # async call graph
+```
+
+Run the server, generate load (e.g. curl or browser), then stop with Ctrl+C. Clinic writes a report (e.g. `.clinic-*.html`); open in a browser. Output is gitignored (`.clinic*`).
+
 ### Finding and fixing all errors (lint + TypeScript)
 
 Run once to see every lint and type error in the API:
@@ -794,7 +806,7 @@ throw new ConflictException('Email already registered');
 ### Response Times
 
 - Target < 200ms for most endpoints
-- Profile with: `npm run start:debug` + Chrome DevTools
+- Profile: Clinic.js scripts (see Profiling section) or `bun run start:debug` + Chrome DevTools
 - Cache static data (game lists, IGDB data) if frequently accessed
 - Consider Redis for session/token caching if needed
 
@@ -878,13 +890,12 @@ npm run build          # Outputs to dist/
 npm run start:prod     # Runs compiled version
 ```
 
-## Debugging Tips
+## Debugging
 
-- Use `--debug` flag: `bun run start:debug`
-- Add breakpoints in Chrome DevTools at `chrome://inspect`
-- Log with `this.logger.log()`/`.error()` from `@nestjs/common`
-- Use `bun run test:debug` for test debugging
-- Check `bunx prisma studio` to inspect database state
+- **Attach (recommended):** From repo root run `cd apps/api && bun run start:debug`, then in Cursor/VS Code use Run and Debug → "API: Attach" (or Chrome `chrome://inspect`).
+- **Jest:** Run and Debug → "API: Jest current file" with a test file open, or `bun run test` with `--runInBand --no-cache` for a single file.
+- Log with `this.logger.log()`/`.error()` from `@nestjs/common`.
+- DB state: `bunx prisma studio` from `apps/api`.
 
 ## Resources & References
 
