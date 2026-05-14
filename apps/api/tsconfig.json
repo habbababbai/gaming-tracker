@@ -27,7 +27,8 @@
     "noImplicitThis": true,
     "useUnknownInCatchVariables": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": false
+    "noUncheckedIndexedAccess": false,
+    "ignoreDeprecations": "6.0"
   },
   "extends": "../../packages/tsconfig/base.json"
 }
