@@ -1,10 +1,18 @@
 import { StyleSheet, TextInput, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+
+import { colors } from '@/constants/colors';
+import { fontSizes } from '@/constants/fonts';
+import { layout } from '@/constants/layout';
 
 export function SearchInput() {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.wrapper}>
       <TextInput
-        placeholder="Search games..."
+        placeholder={t('search.placeholder')}
+        placeholderTextColor={colors.textMuted}
         style={styles.input}
       />
     </View>
@@ -13,14 +21,15 @@ export function SearchInput() {
 
 const styles = StyleSheet.create({
   wrapper: {
-    padding: 16,
+    padding: layout.screenPadding,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 16,
+    borderColor: colors.border,
+    borderRadius: layout.input.borderRadius,
+    paddingHorizontal: layout.input.paddingHorizontal,
+    paddingVertical: layout.input.paddingVertical,
+    fontSize: fontSizes.base,
+    color: colors.text,
   },
 });

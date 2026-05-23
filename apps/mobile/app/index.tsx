@@ -1,19 +1,17 @@
 import {
-  StyleSheet,
-  View,
   Keyboard,
+  StyleSheet,
   TouchableWithoutFeedback,
+  View,
 } from 'react-native';
 
 import { SearchInput } from '@/components/search/SearchInput';
 import { SearchResultsList } from '@/components/search/SearchResultsList';
+import { colors } from '@/constants/colors';
 
 export default function SearchScreen() {
-  function keyboardDismiss() {
-    Keyboard.dismiss();
-  }
   return (
-    <TouchableWithoutFeedback onPress={keyboardDismiss}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={styles.screen}>
         <SearchInput />
         <SearchResultsList />
@@ -25,6 +23,6 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
 });

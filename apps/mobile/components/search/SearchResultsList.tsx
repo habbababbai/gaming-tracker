@@ -1,6 +1,10 @@
 import type { IgdbGame } from '@repo/types';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { colors } from '@/constants/colors';
+import { fontSizes } from '@/constants/fonts';
+import { layout } from '@/constants/layout';
+
 const PLACEHOLDER_GAMES: IgdbGame[] = [
   { id: 1, name: 'Elden Ring', coverUrl: null, releaseYear: 2022 },
   { id: 2, name: 'Hollow Knight', coverUrl: null, releaseYear: 2017 },
@@ -22,11 +26,11 @@ export function SearchResultsList() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    gap: 8,
+    padding: layout.list.padding,
+    gap: layout.list.rowGap,
   },
   row: {
-    fontSize: 16,
-    color: '#111827',
+    fontSize: fontSizes.base,
+    color: colors.text,
   },
 });

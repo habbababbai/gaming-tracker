@@ -2,6 +2,10 @@ import type { IgdbGame } from '@repo/types';
 import { Image } from 'expo-image';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { colors } from '@/constants/colors';
+import { fontSizes, fontWeights } from '@/constants/fonts';
+import { layout } from '@/constants/layout';
+
 interface GameDetailViewProps {
   game: IgdbGame;
 }
@@ -29,36 +33,24 @@ export function GameDetailView({ game }: GameDetailViewProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    gap: 12,
-    backgroundColor: '#fff',
-  },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    backgroundColor: '#fff',
+    padding: layout.screenPadding,
+    gap: layout.sectionGap,
+    backgroundColor: colors.background,
   },
   cover: {
     width: '100%',
-    aspectRatio: 3 / 4,
-    borderRadius: 8,
-    backgroundColor: '#e5e7eb',
+    aspectRatio: layout.cover.aspectRatio,
+    borderRadius: layout.cover.borderRadius,
+    backgroundColor: colors.placeholder,
   },
   coverPlaceholder: {},
   name: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#111827',
+    fontSize: fontSizes.lg,
+    fontWeight: fontWeights.bold,
+    color: colors.text,
   },
   year: {
-    fontSize: 16,
-    color: '#6b7280',
-  },
-  error: {
-    fontSize: 15,
-    color: '#dc2626',
-    textAlign: 'center',
+    fontSize: fontSizes.base,
+    color: colors.textMuted,
   },
 });
