@@ -8,6 +8,7 @@ jest.mock('igdb-api-node', () => ({
   default: jest.fn(() => ({
     fields: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
+    offset: jest.fn().mockReturnThis(),
     search: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
     request: mockRequest,
@@ -151,7 +152,7 @@ describe('IgdbService', () => {
         ],
       });
 
-      const results = await service.search('test');
+      const results = await service.search('test', 10, 20);
       expect(results).toHaveLength(1);
       expect(results[0].name).toBe('Test Game');
     });

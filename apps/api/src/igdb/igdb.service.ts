@@ -58,14 +58,20 @@ export class IgdbService {
    * Searches IGDB for games by name.
    * @param query - Search string
    * @param limit - Max results (default 10)
+   * @param offset - Result offset (default 0)
    * @returns Array of games (id, name, coverUrl, releaseYear)
    * @throws ServiceUnavailableException if IGDB credentials missing or auth fails
    */
-  async search(query: string, limit = 10): Promise<IgdbGame[]> {
+  async search(
+    query: string,
+    limit = 10,
+    offset = 0,
+  ): Promise<IgdbGame[]> {
     const client = await this.getClient();
     const res = await client
       .fields(['id', 'name', 'cover.image_id', 'first_release_date'])
       .limit(limit)
+      .offset(offset)
       .search(query)
       .request('/games');
     return (res.data as object[]).map((g) => this.mapGame(g as never));
