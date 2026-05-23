@@ -1,16 +1,9 @@
 import { StyleSheet, TextInput, View } from 'react-native';
 
-type SearchInputProps = {
-  value: string;
-  onChangeText: (text: string) => void;
-};
-
 export function SearchInput() {
   return (
     <View style={styles.wrapper}>
       <TextInput
-        //value={value}
-        //onChangeText={onChangeText}
         placeholder="Search games..."
         style={styles.input}
       />

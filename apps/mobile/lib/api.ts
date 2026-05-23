@@ -2,6 +2,14 @@ import type { IgdbGame } from '@repo/types';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 
+async function parseJson<T>(res: Response): Promise<T> {
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message ?? `Request failed (${res.status})`);
+  }
+  return res.json() as Promise<T>;
+}
+
 /**
  * GET /api/games/search?q={query}&limit={limit}&offset={offset}
  *
@@ -17,21 +25,6 @@ export async function fetchGames(
   throw new Error(`Not implemented: ${API_URL}/api/games/search`);
 }
 
-/**
- * Same endpoint as `fetchGames`; maps page → offset = (page - 1) * perPage.
- *
- * GET /api/games/search?q={query}&limit={perPage}&offset={(page - 1) * perPage}
- * BE 200: `{ data: IgdbGame[] }`
- */
-export function fetchGamesByPage(
-  query: string,
-  page = 1,
-  perPage = 10,
-): Promise<IgdbGame[]> {
-  throw new Error(
-    `Not implemented: ${API_URL}/api/games/search?q=${query}&limit=${perPage}&offset=${(page - 1) * perPage}`,
-  );
-}
 
 /**
  * GET /api/games/{id} — `id` is IGDB numeric id.
