@@ -8,6 +8,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import type { GamesSearchResponse } from '@repo/types';
 import { Public } from '../auth/public.decorator.js';
 import { IgdbService } from '../igdb/igdb.service.js';
 
@@ -22,12 +23,15 @@ export class GamesController {
     @Query('q') query: string,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset: number,
-  ) {
+  ): Promise<GamesSearchResponse> {
+    const meta = { limit, offset, hasMore: false };
     if (!query?.trim()) {
-      return { data: [] };
+      return { data: [], meta };
     }
-    const data = await this.igdb.search(query.trim(), limit, offset);
-    return { data };
+    const rows = await this.igdb.search(query.trim(), limit + 1, offset);
+    const hasMore = rows.length > limit;
+    const data = hasMore ? rows.slice(0, limit) : rows;
+    return { data, meta: { limit, offset, hasMore } };
   }
 
   @Public()

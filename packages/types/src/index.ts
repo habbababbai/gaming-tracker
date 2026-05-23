@@ -66,6 +66,17 @@ export interface IgdbGame {
   releaseYear: number | null;
 }
 
+export interface GamesSearchMeta {
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+}
+
+export interface GamesSearchResponse {
+  data: IgdbGame[];
+  meta: GamesSearchMeta;
+}
+
 /**
  * User Games DTOs
  */

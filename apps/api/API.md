@@ -79,7 +79,9 @@ Returns `{ data: { user, accessToken } }`. Multiple logins (e.g. web + mobile) c
 | ------ | ------------------- | ----------------- |
 | GET    | `/api/games/search` | Search IGDB       |
 
-**GET /api/games/search** – Query: `?q=elden+ring&limit=10`
+**GET /api/games/search** – Query: `?q=elden+ring&limit=10&offset=0` (defaults: `limit=10`, `offset=0`). Empty/whitespace `q` skips IGDB and returns `{ data: [], meta: { limit, offset, hasMore: false } }`.
+
+Response: `{ data: IgdbGame[], meta: { limit, offset, hasMore } }`. `hasMore` uses limit+1 over-fetch against IGDB; `data` has at most `limit` items.
 
 ---
 

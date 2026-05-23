@@ -38,13 +38,49 @@ describe('Games (e2e)', () => {
   });
 
   describe('/games/search (GET)', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockIgdbService.search.mockResolvedValue([
+        { id: 1, name: 'Game 1', coverUrl: 'url1', releaseYear: 2021 },
+        { id: 2, name: 'Game 2', coverUrl: 'url2', releaseYear: 2022 },
+      ]);
+    });
+
     it('should return search results with limit and offset', async () => {
       const res = await request(app.getHttpServer())
         .get('/games/search?q=test&limit=5&offset=10')
         .expect(200);
 
       expect(res.body.data).toHaveLength(2);
-      expect(mockIgdbService.search).toHaveBeenCalledWith('test', 5, 10);
+      expect(res.body.meta).toEqual({
+        limit: 5,
+        offset: 10,
+        hasMore: false,
+      });
+      expect(mockIgdbService.search).toHaveBeenCalledWith('test', 6, 10);
+    });
+
+    it('should set hasMore when IGDB returns more than limit', async () => {
+      mockIgdbService.search.mockResolvedValueOnce(
+        Array.from({ length: 6 }, (_, i) => ({
+          id: i + 1,
+          name: `Game ${i + 1}`,
+          coverUrl: null,
+          releaseYear: 2020,
+        })),
+      );
+
+      const res = await request(app.getHttpServer())
+        .get('/games/search?q=test&limit=5&offset=0')
+        .expect(200);
+
+      expect(res.body.data).toHaveLength(5);
+      expect(res.body.meta).toEqual({
+        limit: 5,
+        offset: 0,
+        hasMore: true,
+      });
+      expect(mockIgdbService.search).toHaveBeenCalledWith('test', 6, 0);
     });
 
     it('should return empty data when query is missing', async () => {
@@ -53,6 +89,12 @@ describe('Games (e2e)', () => {
         .expect(200);
 
       expect(res.body.data).toEqual([]);
+      expect(res.body.meta).toEqual({
+        limit: 10,
+        offset: 0,
+        hasMore: false,
+      });
+      expect(mockIgdbService.search).not.toHaveBeenCalled();
     });
   });
 

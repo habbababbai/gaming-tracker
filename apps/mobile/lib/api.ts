@@ -1,6 +1,9 @@
-import type { IgdbGame } from '@repo/types';
+import type { GamesSearchResponse, IgdbGame } from '@repo/types';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+
+export const SEARCH_PAGE_SIZE = 10;
+
 
 async function parseJson<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -11,20 +14,20 @@ async function parseJson<T>(res: Response): Promise<T> {
 }
 
 /**
- * GET /api/games/search?q={query}&limit={limit}&offset={offset}
- *
- * BE 200: `{ data: IgdbGame[] }` — no `meta`; pagination is limit/offset only.
- * Empty or whitespace `q`: `{ data: [] }` (still 200).
- * Defaults: limit=10, offset=0.
+ * GET /api/games/search?q=&limit=&offset=
+ * 200 `{ data: IgdbGame[], meta: { limit, offset, hasMore } }` — `hasMore` from BE limit+1 over-fetch
+ * 200 empty/whitespace `q` → `{ data: [], meta }` (no IGDB call)
+ * 400 invalid `limit` / `offset`
+ * 503 IGDB credentials or auth failure
+ * Infinite query: `pageParam` = offset; next page when `meta.hasMore` → `meta.offset + meta.limit`
  */
 export async function fetchGames(
   query: string,
-  limit = 10,
+  limit = SEARCH_PAGE_SIZE,
   offset = 0,
-): Promise<IgdbGame[]> {
+): Promise<GamesSearchResponse> {
   throw new Error(`Not implemented: ${API_URL}/api/games/search`);
 }
-
 
 /**
  * GET /api/games/{id} — `id` is IGDB numeric id.
