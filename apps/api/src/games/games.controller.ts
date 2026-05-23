@@ -11,11 +11,18 @@ import { ApiTags } from '@nestjs/swagger';
 import type { GamesSearchResponse } from '@repo/types';
 import { Public } from '../auth/public.decorator.js';
 import { IgdbService } from '../igdb/igdb.service.js';
+import { dedupeGamesById } from './dedupe-games.js';
+import { SearchSnapshotCache } from './search-snapshot.cache.js';
+
+const SNAPSHOT_SIZE = 100;
 
 @ApiTags('games')
 @Controller('games')
 export class GamesController {
-  constructor(private readonly igdb: IgdbService) {}
+  constructor(
+    private readonly igdb: IgdbService,
+    private readonly cache: SearchSnapshotCache,
+  ) {}
 
   @Public()
   @Get('search')
@@ -24,13 +31,18 @@ export class GamesController {
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset: number,
   ): Promise<GamesSearchResponse> {
-    const meta = { limit, offset, hasMore: false };
-    if (!query?.trim()) {
-      return { data: [], meta };
+    const q = query?.trim().toLowerCase();
+    if (!q) {
+      return { data: [], meta: { limit, offset, hasMore: false } };
     }
-    const rows = await this.igdb.search(query.trim(), limit + 1, offset);
-    const hasMore = rows.length > limit;
-    const data = hasMore ? rows.slice(0, limit) : rows;
+    let snapshot = this.cache.get(q);
+    if (!snapshot) {
+      const raw = await this.igdb.search(q, SNAPSHOT_SIZE, 0);
+      snapshot = dedupeGamesById(raw);
+      this.cache.set(q, snapshot);
+    }
+    const data = snapshot.slice(offset, offset + limit);
+    const hasMore = offset + limit < snapshot.length;
     return { data, meta: { limit, offset, hasMore } };
   }
 
