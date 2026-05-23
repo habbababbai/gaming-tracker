@@ -158,8 +158,50 @@ describe('IgdbService', () => {
     });
   });
 
+  describe('mapGameDetail', () => {
+    it('should map detail fields and similar games', () => {
+      const mapGameDetail = Reflect.get(service, 'mapGameDetail').bind(
+        service,
+      ) as (raw: object) => {
+        summary: string | null;
+        genres: string[];
+        rating: number | null;
+        similarGames: { id: number; name: string }[];
+      };
+
+      const result = mapGameDetail({
+        id: 1,
+        name: 'Elden Ring',
+        cover: { image_id: 'co4jni' },
+        first_release_date: 1645747200,
+        summary: 'A fantasy action RPG.',
+        storyline: 'Become the Elden Lord.',
+        genres: [{ name: 'RPG' }, { name: 'Action' }],
+        aggregated_rating: 96.2,
+        similar_games: [
+          { id: 2, name: 'Dark Souls III', cover: { image_id: 'abc' } },
+          { id: 3, name: '' },
+        ],
+      });
+
+      expect(result.summary).toBe('A fantasy action RPG.');
+      expect(result.storyline).toBe('Become the Elden Lord.');
+      expect(result.genres).toEqual(['RPG', 'Action']);
+      expect(result.releaseDate).toBe('2022-02-25');
+      expect(result.rating).toBe(96);
+      expect(result.similarGames).toEqual([
+        {
+          id: 2,
+          name: 'Dark Souls III',
+          coverUrl:
+            'https://images.igdb.com/igdb/image/upload/t_cover_big/abc.png',
+        },
+      ]);
+    });
+  });
+
   describe('getById', () => {
-    it('should return game by id', async () => {
+    it('should return basic game by id', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () =>
@@ -183,6 +225,36 @@ describe('IgdbService', () => {
       mockRequest.mockResolvedValueOnce({ data: [] });
 
       const result = await service.getById(999999);
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('getDetailById', () => {
+    it('should return game detail by id', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({ access_token: 'token', expires_in: 3600 }),
+      });
+      mockRequest.mockResolvedValueOnce({
+        data: [{ id: 123, name: 'Found Game' }],
+      });
+
+      const result = await service.getDetailById(123);
+      expect(result).not.toBeNull();
+      expect(result?.name).toBe('Found Game');
+      expect(result?.similarGames).toEqual([]);
+    });
+
+    it('should return null when game not found', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({ access_token: 'token', expires_in: 3600 }),
+      });
+      mockRequest.mockResolvedValueOnce({ data: [] });
+
+      const result = await service.getDetailById(999999);
       expect(result).toBeNull();
     });
   });

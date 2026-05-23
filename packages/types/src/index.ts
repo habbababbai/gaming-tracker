@@ -66,6 +66,21 @@ export interface IgdbGame {
   releaseYear: number | null;
 }
 
+export interface IgdbSimilarGame {
+  id: number;
+  name: string;
+  coverUrl: string | null;
+}
+
+export interface IgdbGameDetail extends IgdbGame {
+  summary: string | null;
+  storyline: string | null;
+  genres: string[];
+  releaseDate: string | null;
+  rating: number | null;
+  similarGames: IgdbSimilarGame[];
+}
+
 export interface GamesSearchMeta {
   limit: number;
   offset: number;

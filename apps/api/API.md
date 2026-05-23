@@ -83,6 +83,8 @@ Returns `{ data: { user, accessToken } }`. Multiple logins (e.g. web + mobile) c
 
 Response: `{ data: IgdbGame[], meta: { limit, offset, hasMore } }`. `hasMore` uses limit+1 over-fetch against IGDB; `data` has at most `limit` items.
 
+**GET /api/games/:id** – IGDB id. Returns `{ data: IgdbGameDetail }` (`summary`, `storyline`, `genres`, `releaseDate`, `rating`, `similarGames`, plus list fields). 404 if not found.
+
 ---
 
 ### Users (protected)

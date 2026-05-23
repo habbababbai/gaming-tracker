@@ -1,8 +1,9 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import igdb from 'igdb-api-node';
-import type { IgdbGame } from '@repo/types';
+import type { IgdbGame, IgdbGameDetail, IgdbSimilarGame } from '@repo/types';
 
 const COVER_BASE = 'https://images.igdb.com/igdb/image/upload/t_cover_big';
+const MAX_SIMILAR_GAMES = 12;
 
 @Injectable()
 export class IgdbService {
@@ -34,34 +35,89 @@ export class IgdbService {
     return this.client;
   }
 
+  private coverUrl(imageId?: string): string | null {
+    return imageId ? `${COVER_BASE}/${imageId}.png` : null;
+  }
+
+  private releaseYear(timestamp?: number): number | null {
+    return timestamp ? new Date(timestamp * 1000).getFullYear() : null;
+  }
+
+  private releaseDate(timestamp?: number): string | null {
+    if (!timestamp) return null;
+    return new Date(timestamp * 1000).toISOString().slice(0, 10);
+  }
+
+  private rating(
+    aggregated?: number,
+    total?: number,
+  ): number | null {
+    const value = aggregated ?? total;
+    return value != null ? Math.round(value) : null;
+  }
+
   private mapGame(raw: {
     id: number;
     name: string;
     cover?: { image_id?: string };
     first_release_date?: number;
   }): IgdbGame {
-    const coverUrl = raw.cover?.image_id
-      ? `${COVER_BASE}/${raw.cover.image_id}.png`
-      : null;
-    const releaseYear = raw.first_release_date
-      ? new Date(raw.first_release_date * 1000).getFullYear()
-      : null;
     return {
       id: raw.id,
       name: raw.name,
-      coverUrl,
-      releaseYear,
+      coverUrl: this.coverUrl(raw.cover?.image_id),
+      releaseYear: this.releaseYear(raw.first_release_date),
     };
   }
 
-  /**
-   * Searches IGDB for games by name.
-   * @param query - Search string
-   * @param limit - Max results (default 10)
-   * @param offset - Result offset (default 0)
-   * @returns Array of games (id, name, coverUrl, releaseYear)
-   * @throws ServiceUnavailableException if IGDB credentials missing or auth fails
-   */
+  private mapSimilarGame(raw: {
+    id: number;
+    name?: string;
+    cover?: { image_id?: string };
+  }): IgdbSimilarGame | null {
+    if (!raw.name) return null;
+    return {
+      id: raw.id,
+      name: raw.name,
+      coverUrl: this.coverUrl(raw.cover?.image_id),
+    };
+  }
+
+  private mapGameDetail(raw: {
+    id: number;
+    name: string;
+    cover?: { image_id?: string };
+    first_release_date?: number;
+    summary?: string;
+    storyline?: string;
+    genres?: { name?: string }[];
+    aggregated_rating?: number;
+    total_rating?: number;
+    similar_games?: {
+      id: number;
+      name?: string;
+      cover?: { image_id?: string };
+    }[];
+  }): IgdbGameDetail {
+    const base = this.mapGame(raw);
+    const similarGames = (raw.similar_games ?? [])
+      .map((g) => this.mapSimilarGame(g))
+      .filter((g): g is IgdbSimilarGame => g != null)
+      .slice(0, MAX_SIMILAR_GAMES);
+
+    return {
+      ...base,
+      summary: raw.summary ?? null,
+      storyline: raw.storyline ?? null,
+      genres: (raw.genres ?? [])
+        .map((g) => g.name)
+        .filter((name): name is string => Boolean(name)),
+      releaseDate: this.releaseDate(raw.first_release_date),
+      rating: this.rating(raw.aggregated_rating, raw.total_rating),
+      similarGames,
+    };
+  }
+
   async search(
     query: string,
     limit = 10,
@@ -77,12 +133,6 @@ export class IgdbService {
     return (res.data as object[]).map((g) => this.mapGame(g as never));
   }
 
-  /**
-   * Fetches a single game from IGDB by id.
-   * @param igdbId - IGDB game id
-   * @returns Game or null if not found
-   * @throws ServiceUnavailableException if IGDB credentials missing or auth fails
-   */
   async getById(igdbId: number): Promise<IgdbGame | null> {
     const client = await this.getClient();
     const res = await client
@@ -92,5 +142,28 @@ export class IgdbService {
     const raw = (res.data as object[])[0] as unknown;
     if (!raw) return null;
     return this.mapGame(raw as never);
+  }
+
+  async getDetailById(igdbId: number): Promise<IgdbGameDetail | null> {
+    const client = await this.getClient();
+    const res = await client
+      .fields([
+        'id',
+        'name',
+        'cover.image_id',
+        'first_release_date',
+        'summary',
+        'storyline',
+        'genres.name',
+        'aggregated_rating',
+        'total_rating',
+        'similar_games.name',
+        'similar_games.cover.image_id',
+      ])
+      .where(`id = ${igdbId}`)
+      .request('/games');
+    const raw = (res.data as object[])[0] as unknown;
+    if (!raw) return null;
+    return this.mapGameDetail(raw as never);
   }
 }

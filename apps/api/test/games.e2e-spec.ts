@@ -19,6 +19,23 @@ describe('Games (e2e)', () => {
       }
       return Promise.resolve(null);
     }),
+    getDetailById: jest.fn().mockImplementation((id: number) => {
+      if (id === 1) {
+        return Promise.resolve({
+          id: 1,
+          name: 'Game 1',
+          coverUrl: 'url1',
+          releaseYear: 2021,
+          summary: null,
+          storyline: null,
+          genres: [],
+          releaseDate: '2021-01-01',
+          rating: null,
+          similarGames: [],
+        });
+      }
+      return Promise.resolve(null);
+    }),
   };
 
   beforeAll(async () => {

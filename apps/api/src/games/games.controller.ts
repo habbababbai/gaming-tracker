@@ -37,7 +37,7 @@ export class GamesController {
   @Public()
   @Get(':id')
   async getById(@Param('id', ParseIntPipe) id: number) {
-    const game = await this.igdb.getById(id);
+    const game = await this.igdb.getDetailById(id);
     if (!game) {
       throw new NotFoundException(`Game with ID ${id} not found`);
     }
