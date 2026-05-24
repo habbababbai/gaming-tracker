@@ -1,7 +1,5 @@
 import {
-  Keyboard,
   StyleSheet,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 
@@ -11,12 +9,10 @@ import { colors } from '@/constants/colors';
 
 export default function SearchScreen() {
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={styles.screen}>
         <SearchInput />
         <SearchResultsList />
       </View>
-    </TouchableWithoutFeedback>
   );
 }
 
